@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import Html exposing (..)
+import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 
 
@@ -128,7 +129,7 @@ blankCell = td [] []
 
 blankRow : List Player -> Html msg
 blankRow players =
-  tr [] (List.map (\_ -> blankCell) players)
+  tr [] (blankCell :: (List.map (\_ -> blankCell) players))
 
 headerRow : List Player -> Html msg
 headerRow players =
@@ -181,7 +182,7 @@ gameBoard : Model -> Html Msg
 gameBoard model =
   case model.players of
   [] -> div [] []
-  _ -> table []
+  _ -> table [ class "table" ]
     ( [ headerRow model.players ]
     ++ List.map (cardRow model.players) people
     ++ [ blankRow model.players ]
@@ -197,7 +198,7 @@ gameBoard model =
 
 view : Model -> Html Msg
 view model =
-    div []
+    div [ class "container" ]
         [ title
         , selectNumberOfPlayers model
         , resetGame model
