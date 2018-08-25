@@ -170,7 +170,7 @@ headerRow players =
 
 playerColumnHeader : Player -> Html Msg
 playerColumnHeader player =
-  th [ onClick (BeginGuess player) ] [ text (displayPlayer player) ]
+  th [] [ text (displayPlayer player) ]
 
 
 
@@ -248,12 +248,29 @@ gameBoard model =
     _ -> div [] []
 
 
+guesserOption : Player -> Html Msg
+guesserOption player =
+  a [ class "button", onClick (BeginGuess player) ] [ text (displayPlayer player) ]
+
+selectGuesser : List Player -> Html Msg
+selectGuesser players =
+  div [] (
+    (h2 [] [ text "Who is guessing?" ])
+    :: (List.map guesserOption players)
+    )
+
+guessingForm : Model -> Html Msg
+guessingForm model =
+  case model.guess of
+    Nothing -> selectGuesser model.players
+    Just _ -> p [] [ text "Guesser is set" ]
+
 
 renderMainDisplay : Model -> Html Msg
 renderMainDisplay model =
   case model.displaying of
     Board -> gameBoard model
-    Guessing -> div [] [p [] [text "Guessing mode"]]
+    Guessing -> guessingForm model
 
 
 mainDisplay : Model -> Html Msg
