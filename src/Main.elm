@@ -73,17 +73,30 @@ displayCard card =
     RoomTag room -> displayRoom room
 
 
-type alias Murder =
-  { person: Person
-  , weapon: Weapon
-  , room: Room
-  }
-
 type alias Guess =
-  { player: Player
-  , murder: Murder
+  { player : Player
+  , person : Maybe Person
+  , weapon : Maybe Weapon
+  , room : Maybe Room
   }
 
+
+
+isJust : Maybe a -> Bool
+isJust m =
+  case m of
+    Just _ -> True
+    Nothing -> False
+
+guessInProgress : Maybe Guess -> Bool
+guessInProgress maybeGuess =
+  isJust maybeGuess
+
+guessIsComplete : Maybe Guess -> Bool
+guessIsComplete maybeGuess =
+  case maybeGuess of
+    Nothing -> False
+    Just guess -> isJust guess.person && isJust guess.weapon && isJust guess.room
 
 
 
@@ -91,12 +104,15 @@ type alias Guess =
 
 
 type alias Model =
-  { players : List Player }
+  { players : List Player
+  , guess : Maybe Guess
+  }
 
 init : ( Model, Cmd Msg )
 init =
   (
   { players = []
+  , guess = Nothing
   }
   ,
   Cmd.none
@@ -110,6 +126,14 @@ init =
 type Msg
     = SetPlayers Int
     | ResetGame
+    | BeginGuess Player
+
+
+beginGuess : Model -> Player -> ( Model, Cmd Msg )
+beginGuess model player =
+  case model.guess of
+    Nothing -> ({ model | guess = Just { player = player, person = Nothing, weapon = Nothing, room = Nothing}}, Cmd.none)
+    _ -> (model, Cmd.none)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -119,6 +143,8 @@ update msg model =
       ({ model | players = List.take playerCount possiblePlayers }, Cmd.none)
     ResetGame ->
       ({ model | players = [] }, Cmd.none)
+    BeginGuess player ->
+      beginGuess model player
 
 
 
@@ -131,13 +157,13 @@ blankRow : List Player -> Html msg
 blankRow players =
   tr [] (blankCell :: (List.map (\_ -> blankCell) players))
 
-headerRow : List Player -> Html msg
+headerRow : List Player -> Html Msg
 headerRow players =
   tr [] (blankCell :: (List.map playerColumnHeader players))
 
-playerColumnHeader : Player -> Html msg
+playerColumnHeader : Player -> Html Msg
 playerColumnHeader player =
-  th [] [ text (displayPlayer player) ]
+  th [ onClick (BeginGuess player) ] [ text (displayPlayer player) ]
 
 
 
