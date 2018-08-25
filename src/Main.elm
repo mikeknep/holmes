@@ -102,10 +102,13 @@ guessIsComplete maybeGuess =
 
 ---- MODEL ----
 
+type DisplayMode = Board | Guessing
+
 
 type alias Model =
   { players : List Player
   , guess : Maybe Guess
+  , displaying : DisplayMode
   }
 
 init : ( Model, Cmd Msg )
@@ -113,6 +116,7 @@ init =
   (
   { players = []
   , guess = Nothing
+  , displaying = Board
   }
   ,
   Cmd.none
@@ -127,6 +131,7 @@ type Msg
     = SetPlayers Int
     | ResetGame
     | BeginGuess Player
+    | Display DisplayMode
 
 
 beginGuess : Model -> Player -> ( Model, Cmd Msg )
@@ -145,6 +150,8 @@ update msg model =
       ({ model | players = [] }, Cmd.none)
     BeginGuess player ->
       beginGuess model player
+    Display displayMode ->
+      ({ model | displaying = displayMode }, Cmd.none)
 
 
 
@@ -190,34 +197,70 @@ playerCountButton : Int -> Html Msg
 playerCountButton numberOfPlayers =
   button [ onClick (SetPlayers numberOfPlayers) ] [ text (toString numberOfPlayers) ]
 
-selectNumberOfPlayers : Model -> Html Msg
-selectNumberOfPlayers model =
-  case model.players of
-    [] -> div [] (List.map playerCountButton possibleNumbersOfPlayers)
-    _ -> div [] []
+selectNumberOfPlayers : Html Msg
+selectNumberOfPlayers =
+    div [] (
+      (h3 [] [text "Select number of players"])
+      :: (List.map playerCountButton possibleNumbersOfPlayers)
+      )
 
 
-resetGame : Model -> Html Msg
-resetGame model =
+resetGame : Html Msg
+resetGame =
+  button [ onClick ResetGame ] [ text "Reset" ]
+
+
+toggleBoardView : Model -> Html Msg
+toggleBoardView model =
+  case model.displaying of
+    Board -> a [ class "button is-active" ] [ text "Board" ]
+    _ -> a [ class "button", onClick (Display Board) ] [ text "Board" ]
+
+
+toggleGuessView : Model -> Html Msg
+toggleGuessView model =
+  case model.displaying of
+    Guessing -> a [ class "button is-active" ] [ text "Guess" ]
+    _ -> a [ class "button", onClick (Display Guessing) ] [ text "Guess" ]
+
+
+viewsAndActions : Model -> Html Msg
+viewsAndActions model =
   case model.players of
-    [] -> div [] []
-    _ -> button [ onClick ResetGame ] [ text "Reset" ]
+    [] -> selectNumberOfPlayers
+    _ -> div []
+      [ toggleBoardView model
+      , toggleGuessView model
+      ]
 
 
 gameBoard : Model -> Html Msg
 gameBoard model =
+  case model.displaying of
+    Board -> table [ class "table" ]
+      ( [ headerRow model.players ]
+      ++ List.map (cardRow model.players) people
+      ++ [ blankRow model.players ]
+      ++ List.map (cardRow model.players) weapons
+      ++ [ blankRow model.players ]
+      ++ List.map (cardRow model.players) rooms
+      )
+    _ -> div [] []
+
+
+
+renderMainDisplay : Model -> Html Msg
+renderMainDisplay model =
+  case model.displaying of
+    Board -> gameBoard model
+    Guessing -> div [] [p [] [text "Guessing mode"]]
+
+
+mainDisplay : Model -> Html Msg
+mainDisplay model =
   case model.players of
-  [] -> div [] []
-  _ -> table [ class "table" ]
-    ( [ headerRow model.players ]
-    ++ List.map (cardRow model.players) people
-    ++ [ blankRow model.players ]
-    ++ List.map (cardRow model.players) weapons
-    ++ [ blankRow model.players ]
-    ++ List.map (cardRow model.players) rooms
-    )
-
-
+    [] -> div [] []
+    _ -> renderMainDisplay model
 
 
 
@@ -226,9 +269,9 @@ view : Model -> Html Msg
 view model =
     div [ class "container" ]
         [ title
-        , selectNumberOfPlayers model
-        , resetGame model
-        , gameBoard model
+        , viewsAndActions model
+        , mainDisplay model
+        , resetGame
         ]
 
 
