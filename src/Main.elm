@@ -23,8 +23,10 @@ displayPlayer player =
     P6 -> "P6"
 
 type Person = MrGreen | ProfessorPlum | MissScarlet | ColMustard | MrsWhite | MrsPeacock
-people : List Card
-people = [PersonTag MrGreen, PersonTag ProfessorPlum, PersonTag MissScarlet, PersonTag ColMustard, PersonTag MrsWhite, PersonTag MrsPeacock]
+people : List Person
+people = [MrGreen, ProfessorPlum, MissScarlet, ColMustard, MrsWhite, MrsPeacock]
+personCards : List Card
+personCards = List.map (\person -> PersonTag person) people
 displayPerson : Person -> String
 displayPerson person =
   case person of
@@ -36,8 +38,10 @@ displayPerson person =
     MrsPeacock -> "Mrs. Peacock"
 
 type Weapon = Knife | Rope | Candlestick | Pipe | Revolver | Wrench
-weapons : List Card
-weapons = [WeaponTag Knife, WeaponTag Rope, WeaponTag Candlestick, WeaponTag Pipe, WeaponTag Revolver, WeaponTag Wrench]
+weapons : List Weapon
+weapons = [Knife, Rope, Candlestick, Pipe, Revolver, Wrench]
+weaponCards : List Card
+weaponCards = List.map (\weapon -> WeaponTag weapon) weapons
 displayWeapon : Weapon -> String
 displayWeapon weapon =
   case weapon of
@@ -49,8 +53,10 @@ displayWeapon weapon =
     Wrench -> "Wrench"
 
 type Room = Hall | Study | Conservatory | Kitchen | Ballroom | Lounge | Billiards | Library | Dining
-rooms : List Card
-rooms = [RoomTag Hall, RoomTag Study, RoomTag Conservatory, RoomTag Kitchen, RoomTag Ballroom, RoomTag Lounge, RoomTag Billiards, RoomTag Library, RoomTag Dining]
+rooms : List Room
+rooms = [Hall, Study, Conservatory, Kitchen, Ballroom, Lounge, Billiards, Library, Dining]
+roomCards : List Card
+roomCards = List.map (\room -> RoomTag room) rooms
 displayRoom : Room -> String
 displayRoom room =
   case room of
@@ -132,6 +138,9 @@ type Msg
     | ResetGame
     | BeginGuess Player
     | Display DisplayMode
+    | SetPersonGuess Person
+    | SetWeaponGuess Weapon
+    | SetRoomGuess Room
 
 
 beginGuess : Model -> Player -> ( Model, Cmd Msg )
@@ -139,6 +148,47 @@ beginGuess model player =
   case model.guess of
     Nothing -> ({ model | guess = Just { player = player, person = Nothing, weapon = Nothing, room = Nothing}}, Cmd.none)
     _ -> (model, Cmd.none)
+
+
+attachPersonToGuess : Person -> Guess -> Guess
+attachPersonToGuess person guess =
+  { guess | person = Just person }
+
+setPersonGuess : Model -> Person -> ( Model, Cmd Msg )
+setPersonGuess model person =
+  let
+      newGuess =
+        Maybe.map (attachPersonToGuess person) model.guess
+  in
+  ({ model | guess = newGuess }, Cmd.none)
+
+
+attachWeaponToGuess : Weapon -> Guess -> Guess
+attachWeaponToGuess weapon guess =
+  { guess | weapon = Just weapon }
+
+setWeaponGuess : Model -> Weapon -> ( Model, Cmd Msg )
+setWeaponGuess model weapon =
+  let
+      newGuess =
+        Maybe.map (attachWeaponToGuess weapon) model.guess
+  in
+  ({ model | guess = newGuess }, Cmd.none)
+
+
+attachRoomToGuess : Room -> Guess -> Guess
+attachRoomToGuess room guess =
+  { guess | room = Just room }
+
+setRoomGuess : Model -> Room -> ( Model, Cmd Msg )
+setRoomGuess model room =
+  let
+      newGuess =
+        Maybe.map (attachRoomToGuess room) model.guess
+  in
+  ({ model | guess = newGuess }, Cmd.none)
+
+
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -150,6 +200,12 @@ update msg model =
       ({ model | players = [] }, Cmd.none)
     BeginGuess player ->
       beginGuess model player
+    SetPersonGuess person ->
+      setPersonGuess model person
+    SetWeaponGuess weapon ->
+      setWeaponGuess model weapon
+    SetRoomGuess room ->
+      setRoomGuess model room
     Display displayMode ->
       ({ model | displaying = displayMode }, Cmd.none)
 
@@ -239,11 +295,11 @@ gameBoard model =
   case model.displaying of
     Board -> table [ class "table" ]
       ( [ headerRow model.players ]
-      ++ List.map (cardRow model.players) people
+      ++ List.map (cardRow model.players) personCards
       ++ [ blankRow model.players ]
-      ++ List.map (cardRow model.players) weapons
+      ++ List.map (cardRow model.players) weaponCards
       ++ [ blankRow model.players ]
-      ++ List.map (cardRow model.players) rooms
+      ++ List.map (cardRow model.players) roomCards
       )
     _ -> div [] []
 
@@ -259,11 +315,60 @@ selectGuesser players =
     :: (List.map guesserOption players)
     )
 
+
+personOption : Person -> Html Msg
+personOption person =
+  a [ class "button", onClick (SetPersonGuess person) ] [ text (displayPerson person) ]
+
+selectPerson : Html Msg
+selectPerson =
+  div [] (List.map personOption people)
+
+
+weaponOption : Weapon -> Html Msg
+weaponOption weapon =
+  a [ class "button", onClick (SetWeaponGuess weapon) ] [ text (displayWeapon weapon) ]
+
+selectWeapon : Html Msg
+selectWeapon =
+  div [] (List.map weaponOption weapons)
+
+
+roomOption : Room -> Html Msg
+roomOption room =
+  a [ class "button", onClick (SetRoomGuess room) ] [ text (displayRoom room) ]
+
+selectRoom : Html Msg
+selectRoom =
+  div [] (List.map roomOption rooms)
+
+
+renderShowerOptions : Html msg
+renderShowerOptions =
+  div []
+    [ p [] [text "Last 'view' here is a form for setting whether other players show a card or not."]
+    , p [] [text "Should show the full guess object (since people always ask to be reminded)"]
+    , p [] [text "Every player except the guesser has Yes/No checkboxes."]
+    , p [] [text "Clicking No updates that player's status for that card and grays out that player on this page"]
+    , p [] [text "Clicking Yes updates that player's status for that card, resets the guess, and returns to Board view"]
+    , p [] [text "Clicking No on the LAST player should also exit the page (avoid a separate 'nobody showed a card' button)"]
+    ]
+
+selectCards : Guess -> List Player -> Html Msg
+selectCards guess players =
+  case guess.person of
+    Nothing -> selectPerson
+    Just _ -> case guess.weapon of
+      Nothing -> selectWeapon
+      Just _ -> case guess.room of
+        Nothing -> selectRoom
+        Just _ -> renderShowerOptions
+
 guessingForm : Model -> Html Msg
 guessingForm model =
   case model.guess of
     Nothing -> selectGuesser model.players
-    Just _ -> p [] [ text "Guesser is set" ]
+    Just guess -> selectCards guess model.players
 
 
 renderMainDisplay : Model -> Html Msg
