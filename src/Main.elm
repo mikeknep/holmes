@@ -1,4 +1,4 @@
-module Main exposing (Card(..), DisplayMode(..), Guess, Model, Msg(..), Person(..), Player(..), Room(..), Weapon(..), beginGuess, blankCell, blankRow, cardCell, cardPlayerCell, cardRow, displayCard, displayPerson, displayPlayer, displayRoom, displayWeapon, gameBoard, guesserOption, guessingForm, headerRow, init, main, mainDisplay, people, personCards, playerColumnHeader, playerCountButton, possibleNumbersOfPlayers, possiblePlayers, renderMainDisplay, renderShowerOptions, resetGame, roomCards, rooms, selectCards, selectGuesser, selectNumberOfPlayers, title, toggleBoardView, toggleGuessView, update, view, viewsAndActions, weaponCards, weapons)
+module Main exposing (Card(..), DisplayMode(..), Guess, Model, Msg(..), Person(..), Room(..), Weapon(..), beginGuess, blankCell, blankRow, cardCell, cardPlayerCell, cardRow, displayCard, displayPerson, displayRoom, displayWeapon, gameBoard, guesserOption, guessingForm, headerRow, init, main, mainDisplay, people, personCards, playerColumnHeader, playerCountButton, possibleNumbersOfPlayers, possiblePlayers, renderMainDisplay, renderShowerOptions, resetGame, roomCards, rooms, selectCards, selectGuesser, selectNumberOfPlayers, title, toggleBoardView, toggleGuessView, update, view, viewsAndActions, weaponCards, weapons)
 
 import Html exposing (..)
 import Html.Attributes exposing (class)
@@ -9,44 +9,24 @@ import Html.Events exposing (onClick)
 ---- DOMAIN ---
 
 
-type Player
-    = P1
-    | P2
-    | P3
-    | P4
-    | P5
-    | P6
+type alias Player =
+    { name : String
+    }
+
+
+createPlayer : String -> Player
+createPlayer name =
+    { name = name
+    }
 
 
 possiblePlayers : List Player
 possiblePlayers =
-    [ P1, P2, P3, P4, P5, P6 ]
+    List.map createPlayer [ "P1", "P2", "P3", "P4", "P5", "P6" ]
 
 
 possibleNumbersOfPlayers =
     [ 3, 4, 5, 6 ]
-
-
-displayPlayer : Player -> String
-displayPlayer player =
-    case player of
-        P1 ->
-            "P1"
-
-        P2 ->
-            "P2"
-
-        P3 ->
-            "P3"
-
-        P4 ->
-            "P4"
-
-        P5 ->
-            "P5"
-
-        P6 ->
-            "P6"
 
 
 type Person
@@ -330,12 +310,12 @@ headerRow players =
 
 playerColumnHeader : Player -> Html Msg
 playerColumnHeader player =
-    th [] [ text (displayPlayer player) ]
+    th [] [ text player.name ]
 
 
 cardPlayerCell : Card -> Player -> Html msg
 cardPlayerCell card player =
-    td [] [ text (displayCard card ++ "--" ++ displayPlayer player) ]
+    td [] [ text (displayCard card ++ "--" ++ player.name) ]
 
 
 cardCell : Card -> Html msg
@@ -423,7 +403,7 @@ gameBoard model =
 
 guesserOption : Player -> Html Msg
 guesserOption player =
-    a [ class "button", onClick (BeginGuess player) ] [ text (displayPlayer player) ]
+    a [ class "button", onClick (BeginGuess player) ] [ text player.name ]
 
 
 selectGuesser : List Player -> Html Msg
