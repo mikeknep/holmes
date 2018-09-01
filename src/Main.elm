@@ -1,4 +1,4 @@
-module Main exposing (Card(..), DisplayMode(..), Guess, Model, Msg(..), Person(..), Player(..), Room(..), Weapon(..), attachPersonToGuess, attachRoomToGuess, attachWeaponToGuess, beginGuess, blankCell, blankRow, cardCell, cardPlayerCell, cardRow, displayCard, displayPerson, displayPlayer, displayRoom, displayWeapon, gameBoard, guessInProgress, guessIsComplete, guesserOption, guessingForm, headerRow, init, isJust, main, mainDisplay, people, personCards, personOption, playerColumnHeader, playerCountButton, possibleNumbersOfPlayers, possiblePlayers, renderMainDisplay, renderShowerOptions, resetGame, roomCards, roomOption, rooms, selectCards, selectGuesser, selectNumberOfPlayers, selectPerson, selectRoom, selectWeapon, setPersonGuess, setRoomGuess, setWeaponGuess, title, toggleBoardView, toggleGuessView, update, view, viewsAndActions, weaponCards, weaponOption, weapons)
+module Main exposing (Card(..), DisplayMode(..), Guess, Model, Msg(..), Person(..), Player(..), Room(..), Weapon(..), attachPersonToGuess, attachRoomToGuess, attachWeaponToGuess, beginGuess, blankCell, blankRow, cardCell, cardPlayerCell, cardRow, displayCard, displayPerson, displayPlayer, displayRoom, displayWeapon, gameBoard, guesserOption, guessingForm, headerRow, init, main, mainDisplay, people, personCards, personOption, playerColumnHeader, playerCountButton, possibleNumbersOfPlayers, possiblePlayers, renderMainDisplay, renderShowerOptions, resetGame, roomCards, roomOption, rooms, selectCards, selectGuesser, selectNumberOfPlayers, selectPerson, selectRoom, selectWeapon, setPersonGuess, setRoomGuess, setWeaponGuess, title, toggleBoardView, toggleGuessView, update, view, viewsAndActions, weaponCards, weaponOption, weapons)
 
 import Html exposing (..)
 import Html.Attributes exposing (class)
@@ -211,31 +211,6 @@ type alias Guess =
     }
 
 
-isJust : Maybe a -> Bool
-isJust m =
-    case m of
-        Just _ ->
-            True
-
-        Nothing ->
-            False
-
-
-guessInProgress : Maybe Guess -> Bool
-guessInProgress maybeGuess =
-    isJust maybeGuess
-
-
-guessIsComplete : Maybe Guess -> Bool
-guessIsComplete maybeGuess =
-    case maybeGuess of
-        Nothing ->
-            False
-
-        Just guess ->
-            isJust guess.person && isJust guess.weapon && isJust guess.room
-
-
 
 ---- MODEL ----
 
@@ -276,11 +251,20 @@ type Msg
     | SetRoomGuess Room
 
 
+newGuess : Player -> Guess
+newGuess player =
+    { player = player
+    , person = Nothing
+    , weapon = Nothing
+    , room = Nothing
+    }
+
+
 beginGuess : Model -> Player -> ( Model, Cmd Msg )
 beginGuess model player =
     case model.guess of
         Nothing ->
-            ( { model | guess = Just { player = player, person = Nothing, weapon = Nothing, room = Nothing } }, Cmd.none )
+            ( { model | guess = Just (newGuess player) }, Cmd.none )
 
         _ ->
             ( model, Cmd.none )
