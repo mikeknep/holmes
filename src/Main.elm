@@ -1,4 +1,4 @@
-module Main exposing (Card(..), DisplayMode(..), Guess, Model, Msg(..), Person(..), Player(..), Room(..), Weapon(..), attachPersonToGuess, attachRoomToGuess, attachWeaponToGuess, beginGuess, blankCell, blankRow, cardCell, cardPlayerCell, cardRow, displayCard, displayPerson, displayPlayer, displayRoom, displayWeapon, gameBoard, guesserOption, guessingForm, headerRow, init, main, mainDisplay, people, personCards, personOption, playerColumnHeader, playerCountButton, possibleNumbersOfPlayers, possiblePlayers, renderMainDisplay, renderShowerOptions, resetGame, roomCards, roomOption, rooms, selectCards, selectGuesser, selectNumberOfPlayers, selectPerson, selectRoom, selectWeapon, setPersonGuess, setRoomGuess, setWeaponGuess, title, toggleBoardView, toggleGuessView, update, view, viewsAndActions, weaponCards, weaponOption, weapons)
+module Main exposing (Card(..), DisplayMode(..), Guess, Model, Msg(..), Person(..), Player(..), Room(..), Weapon(..), beginGuess, blankCell, blankRow, cardCell, cardPlayerCell, cardRow, displayCard, displayPerson, displayPlayer, displayRoom, displayWeapon, gameBoard, guesserOption, guessingForm, headerRow, init, main, mainDisplay, people, personCards, playerColumnHeader, playerCountButton, possibleNumbersOfPlayers, possiblePlayers, renderMainDisplay, renderShowerOptions, resetGame, roomCards, rooms, selectCards, selectGuesser, selectNumberOfPlayers, title, toggleBoardView, toggleGuessView, update, view, viewsAndActions, weaponCards, weapons)
 
 import Html exposing (..)
 import Html.Attributes exposing (class)
@@ -246,9 +246,7 @@ type Msg
     | ResetGame
     | BeginGuess Player
     | Display DisplayMode
-    | SetPersonGuess Person
-    | SetWeaponGuess Weapon
-    | SetRoomGuess Room
+    | SetCardGuess Card
 
 
 newGuess : Player -> Guess
@@ -270,44 +268,24 @@ beginGuess model player =
             ( model, Cmd.none )
 
 
-attachPersonToGuess : Person -> Guess -> Guess
-attachPersonToGuess person guess =
-    { guess | person = Just person }
+attachCardToGuess : Card -> Guess -> Guess
+attachCardToGuess card guess =
+    case card of
+        PersonTag person ->
+            { guess | person = Just person }
+
+        WeaponTag weapon ->
+            { guess | weapon = Just weapon }
+
+        RoomTag room ->
+            { guess | room = Just room }
 
 
-setPersonGuess : Model -> Person -> ( Model, Cmd Msg )
-setPersonGuess model person =
+setCardGuess : Model -> Card -> ( Model, Cmd Msg )
+setCardGuess model card =
     let
         newGuess =
-            Maybe.map (attachPersonToGuess person) model.guess
-    in
-    ( { model | guess = newGuess }, Cmd.none )
-
-
-attachWeaponToGuess : Weapon -> Guess -> Guess
-attachWeaponToGuess weapon guess =
-    { guess | weapon = Just weapon }
-
-
-setWeaponGuess : Model -> Weapon -> ( Model, Cmd Msg )
-setWeaponGuess model weapon =
-    let
-        newGuess =
-            Maybe.map (attachWeaponToGuess weapon) model.guess
-    in
-    ( { model | guess = newGuess }, Cmd.none )
-
-
-attachRoomToGuess : Room -> Guess -> Guess
-attachRoomToGuess room guess =
-    { guess | room = Just room }
-
-
-setRoomGuess : Model -> Room -> ( Model, Cmd Msg )
-setRoomGuess model room =
-    let
-        newGuess =
-            Maybe.map (attachRoomToGuess room) model.guess
+            Maybe.map (attachCardToGuess card) model.guess
     in
     ( { model | guess = newGuess }, Cmd.none )
 
@@ -324,14 +302,8 @@ update msg model =
         BeginGuess player ->
             beginGuess model player
 
-        SetPersonGuess person ->
-            setPersonGuess model person
-
-        SetWeaponGuess weapon ->
-            setWeaponGuess model weapon
-
-        SetRoomGuess room ->
-            setRoomGuess model room
+        SetCardGuess card ->
+            setCardGuess model card
 
         Display displayMode ->
             ( { model | displaying = displayMode }, Cmd.none )
@@ -462,34 +434,14 @@ selectGuesser players =
         )
 
 
-personOption : Person -> Html Msg
-personOption person =
-    a [ class "button", onClick (SetPersonGuess person) ] [ text (displayPerson person) ]
+cardOption : Card -> Html Msg
+cardOption card =
+    a [ class "button", onClick (SetCardGuess card) ] [ text (displayCard card) ]
 
 
-selectPerson : Html Msg
-selectPerson =
-    div [] (List.map personOption people)
-
-
-weaponOption : Weapon -> Html Msg
-weaponOption weapon =
-    a [ class "button", onClick (SetWeaponGuess weapon) ] [ text (displayWeapon weapon) ]
-
-
-selectWeapon : Html Msg
-selectWeapon =
-    div [] (List.map weaponOption weapons)
-
-
-roomOption : Room -> Html Msg
-roomOption room =
-    a [ class "button", onClick (SetRoomGuess room) ] [ text (displayRoom room) ]
-
-
-selectRoom : Html Msg
-selectRoom =
-    div [] (List.map roomOption rooms)
+selectCard : List Card -> Html Msg
+selectCard cards =
+    div [] (List.map cardOption cards)
 
 
 renderShowerOptions : Html msg
@@ -508,17 +460,17 @@ selectCards : Guess -> List Player -> Html Msg
 selectCards guess players =
     case guess.person of
         Nothing ->
-            selectPerson
+            selectCard personCards
 
         Just _ ->
             case guess.weapon of
                 Nothing ->
-                    selectWeapon
+                    selectCard weaponCards
 
                 Just _ ->
                     case guess.room of
                         Nothing ->
-                            selectRoom
+                            selectCard roomCards
 
                         Just _ ->
                             renderShowerOptions
