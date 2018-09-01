@@ -9,14 +9,45 @@ import Html.Events exposing (onClick)
 ---- DOMAIN ---
 
 
+type HoldingStatus
+    = Unknown
+    | NotHolding
+    | MaybeHolding
+    | Holding
+
+
+type alias CardholdingStatus =
+    { card : Card
+    , holdingStatus : HoldingStatus
+    }
+
+
 type alias Player =
     { name : String
+    , cardholdingStatuses : List CardholdingStatus
     }
+
+
+openingStatus : Card -> CardholdingStatus
+openingStatus card =
+    { card = card
+    , holdingStatus = Unknown
+    }
+
+
+openingCardholdingStatuses : List CardholdingStatus
+openingCardholdingStatuses =
+    let
+        allCards =
+            personCards ++ weaponCards ++ roomCards
+    in
+    List.map openingStatus allCards
 
 
 createPlayer : String -> Player
 createPlayer name =
     { name = name
+    , cardholdingStatuses = openingCardholdingStatuses
     }
 
 
