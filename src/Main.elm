@@ -1,5 +1,6 @@
 module Main exposing (Card(..), DisplayMode(..), Guess, Model, Msg(..), Person(..), Room(..), Weapon(..), beginGuess, blankCell, blankRow, cardCell, cardPlayerCell, cardRow, displayCard, displayPerson, displayRoom, displayWeapon, gameBoard, guesserOption, guessingForm, headerRow, init, main, mainDisplay, people, personCards, playerColumnHeader, playerCountButton, possibleNumbersOfPlayers, possiblePlayers, renderMainDisplay, renderShowerOptions, resetGame, roomCards, rooms, selectCards, selectGuesser, selectNumberOfPlayers, title, toggleBoardView, toggleGuessView, update, view, viewsAndActions, weaponCards, weapons)
 
+import Dict exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
@@ -10,38 +11,27 @@ import Html.Events exposing (onClick)
 
 
 type HoldingStatus
-    = Unknown
-    | NotHolding
-    | MaybeHolding
+    = NotHolding
+    | MaybeHolding Int
     | Holding
-
-
-type alias CardholdingStatus =
-    { card : Card
-    , holdingStatus : HoldingStatus
-    }
 
 
 type alias Player =
     { name : String
-    , cardholdingStatuses : List CardholdingStatus
+    , cardholdingStatuses : Dict String HoldingStatus
     }
 
 
-openingStatus : Card -> CardholdingStatus
-openingStatus card =
-    { card = card
-    , holdingStatus = Unknown
-    }
-
-
-openingCardholdingStatuses : List CardholdingStatus
+openingCardholdingStatuses : Dict String HoldingStatus
 openingCardholdingStatuses =
     let
         allCards =
             personCards ++ weaponCards ++ roomCards
     in
-    List.map openingStatus allCards
+    allCards
+        |> List.map toString
+        |> List.map (\card -> ( card, MaybeHolding 0 ))
+        |> Dict.fromList
 
 
 createPlayer : String -> Player
