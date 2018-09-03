@@ -445,16 +445,27 @@ selectCard cards =
     div [] (List.map cardOption cards)
 
 
-renderShowerOptions : Html msg
-renderShowerOptions =
-    div []
-        [ p [] [ text "Last 'view' here is a form for setting whether other players show a card or not." ]
-        , p [] [ text "Should show the full guess object (since people always ask to be reminded)" ]
-        , p [] [ text "Every player except the guesser has Yes/No checkboxes." ]
-        , p [] [ text "Clicking No updates that player's status for that card and grays out that player on this page" ]
-        , p [] [ text "Clicking Yes updates that player's status for that card, resets the guess, and returns to Board view" ]
-        , p [] [ text "Clicking No on the LAST player should also exit the page (avoid a separate 'nobody showed a card' button)" ]
-        ]
+showerOption : Player -> Html msg
+showerOption player =
+    -- yes/no checkboxes
+    -- no :: update player's status for those three cards
+    -- no :: *last* player to say no should exit the page (avoid a separate 'nobody showed a card' button)
+    -- yes :: update player's status for those three cards, clears guess, returns to board view
+    p [] [ text "Shower option" ]
+
+
+displayGuess : Guess -> String
+displayGuess guess =
+    "Display the guess here"
+
+
+renderShowerOptions : Guess -> List Player -> Html msg
+renderShowerOptions guess players =
+    let
+        possibleShowers =
+            List.filter (\player -> player /= guess.player) players
+    in
+    div [] ([ h3 [] [ text (displayGuess guess) ] ] ++ List.map showerOption possibleShowers)
 
 
 selectCards : Guess -> List Player -> Html Msg
@@ -474,7 +485,7 @@ selectCards guess players =
                             selectCard roomCards
 
                         Just _ ->
-                            renderShowerOptions
+                            renderShowerOptions guess players
 
 
 guessingForm : Model -> Html Msg
