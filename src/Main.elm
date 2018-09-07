@@ -298,7 +298,7 @@ update msg model =
             ( { model | players = List.take playerCount possiblePlayers }, Cmd.none )
 
         ResetGame ->
-            ( { model | players = [] }, Cmd.none )
+            init
 
         BeginGuess player ->
             beginGuess model player
