@@ -206,35 +206,41 @@ displayCard card =
             displayRoom room
 
 
-type alias Guess =
-    { player : Player
-    , person : Maybe Person
-    , weapon : Maybe Weapon
-    , room : Maybe Room
+type alias CompleteGuess =
+    { guesser : Player
+    , person : Person
+    , weapon : Weapon
+    , room : Room
+    , noShows : List Player
     }
+
+
+type InProgressGuess
+    = NothingIsSet
+    | PersonIsSet Person
+    | WeaponIsSet Person Weapon
 
 
 
 ---- MODEL ----
 
 
-type DisplayMode
-    = Board
-    | Guessing
+type GameState
+    = Guessing Player InProgressGuess
+    | Revealing CompleteGuess
+    | Investigating
 
 
 type alias Model =
     { players : List Player
-    , guess : Maybe Guess
-    , displaying : DisplayMode
+    , gameState : GameState
     }
 
 
 init : ( Model, Cmd Msg )
 init =
     ( { players = []
-      , guess = Nothing
-      , displaying = Board
+      , gameState = Investigating
       }
     , Cmd.none
     )
@@ -248,49 +254,59 @@ type Msg
     = SetPlayers Int
     | ResetGame
     | BeginGuess Player
-    | Display DisplayMode
-    | SetCardGuess Card
-
-
-newGuess : Player -> Guess
-newGuess player =
-    { player = player
-    , person = Nothing
-    , weapon = Nothing
-    , room = Nothing
-    }
+    | SetPersonGuess Person
+    | SetWeaponGuess Weapon
+    | SetRoomGuess Room
 
 
 beginGuess : Model -> Player -> ( Model, Cmd Msg )
 beginGuess model player =
-    case model.guess of
-        Nothing ->
-            ( { model | guess = Just (newGuess player) }, Cmd.none )
+    case model.gameState of
+        Investigating ->
+            ( { model | gameState = Guessing player NothingIsSet }, Cmd.none )
 
         _ ->
             ( model, Cmd.none )
 
 
-attachCardToGuess : Card -> Guess -> Guess
-attachCardToGuess card guess =
-    case card of
-        PersonTag person ->
-            { guess | person = Just person }
+setPersonGuess : Model -> Person -> ( Model, Cmd Msg )
+setPersonGuess model person =
+    case model.gameState of
+        Guessing guesser NothingIsSet ->
+            ( { model | gameState = Guessing guesser (PersonIsSet person) }, Cmd.none )
 
-        WeaponTag weapon ->
-            { guess | weapon = Just weapon }
-
-        RoomTag room ->
-            { guess | room = Just room }
+        _ ->
+            ( model, Cmd.none )
 
 
-setCardGuess : Model -> Card -> ( Model, Cmd Msg )
-setCardGuess model card =
-    let
-        updatedGuess =
-            Maybe.map (attachCardToGuess card) model.guess
-    in
-    ( { model | guess = updatedGuess }, Cmd.none )
+setWeaponGuess : Model -> Weapon -> ( Model, Cmd Msg )
+setWeaponGuess model weapon =
+    case model.gameState of
+        Guessing guesser (PersonIsSet person) ->
+            ( { model | gameState = Guessing guesser (WeaponIsSet person weapon) }, Cmd.none )
+
+        _ ->
+            ( model, Cmd.none )
+
+
+buildCompleteGuess : Player -> Person -> Weapon -> Room -> CompleteGuess
+buildCompleteGuess guesser person weapon room =
+    { guesser = guesser
+    , person = person
+    , weapon = weapon
+    , room = room
+    , noShows = []
+    }
+
+
+setRoomGuess : Model -> Room -> ( Model, Cmd Msg )
+setRoomGuess model room =
+    case model.gameState of
+        Guessing guesser (WeaponIsSet person weapon) ->
+            ( { model | gameState = Revealing (buildCompleteGuess guesser person weapon room) }, Cmd.none )
+
+        _ ->
+            ( model, Cmd.none )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -305,11 +321,14 @@ update msg model =
         BeginGuess player ->
             beginGuess model player
 
-        SetCardGuess card ->
-            setCardGuess model card
+        SetPersonGuess person ->
+            setPersonGuess model person
 
-        Display displayMode ->
-            ( { model | displaying = displayMode }, Cmd.none )
+        SetWeaponGuess weapon ->
+            setWeaponGuess model weapon
+
+        SetRoomGuess room ->
+            setRoomGuess model room
 
 
 
@@ -374,54 +393,30 @@ resetGame =
     button [ onClick ResetGame ] [ text "Reset" ]
 
 
-toggleBoardView : Model -> Html Msg
-toggleBoardView model =
-    case model.displaying of
-        Board ->
-            a [ class "button is-active" ] [ text "Board" ]
-
-        _ ->
-            a [ class "button", onClick (Display Board) ] [ text "Board" ]
-
-
-toggleGuessView : Model -> Html Msg
-toggleGuessView model =
-    case model.displaying of
-        Guessing ->
-            a [ class "button is-active" ] [ text "Guess" ]
-
-        _ ->
-            a [ class "button", onClick (Display Guessing) ] [ text "Guess" ]
-
-
-viewsAndActions : Model -> Html Msg
-viewsAndActions model =
+setupNewGame : Model -> Html Msg
+setupNewGame model =
     case model.players of
         [] ->
             selectNumberOfPlayers
 
         _ ->
-            div []
-                [ toggleBoardView model
-                , toggleGuessView model
-                ]
+            div [] []
 
 
 gameBoard : Model -> Html Msg
 gameBoard model =
-    case model.displaying of
-        Board ->
-            table [ class "table" ]
-                ([ headerRow model.players ]
-                    ++ List.map (cardRow model.players) personCards
-                    ++ [ blankRow model.players ]
-                    ++ List.map (cardRow model.players) weaponCards
-                    ++ [ blankRow model.players ]
-                    ++ List.map (cardRow model.players) roomCards
-                )
-
-        _ ->
-            div [] []
+    div []
+        (List.map guesserOption model.players
+            ++ [ table [ class "table" ]
+                    ([ headerRow model.players ]
+                        ++ List.map (cardRow model.players) personCards
+                        ++ [ blankRow model.players ]
+                        ++ List.map (cardRow model.players) weaponCards
+                        ++ [ blankRow model.players ]
+                        ++ List.map (cardRow model.players) roomCards
+                    )
+               ]
+        )
 
 
 guesserOption : Player -> Html Msg
@@ -429,17 +424,21 @@ guesserOption player =
     a [ class "button", onClick (BeginGuess player) ] [ text player.name ]
 
 
-selectGuesser : List Player -> Html Msg
-selectGuesser players =
-    div []
-        (h2 [] [ text "Who is guessing?" ]
-            :: List.map guesserOption players
-        )
-
-
 cardOption : Card -> Html Msg
 cardOption card =
-    a [ class "button", onClick (SetCardGuess card) ] [ text (displayCard card) ]
+    let
+        clickHandler =
+            case card of
+                PersonTag person ->
+                    SetPersonGuess person
+
+                WeaponTag weapon ->
+                    SetWeaponGuess weapon
+
+                RoomTag room ->
+                    SetRoomGuess room
+    in
+    a [ class "button", onClick clickHandler ] [ text (displayCard card) ]
 
 
 selectCard : List Card -> Html Msg
@@ -456,7 +455,7 @@ showerOption player =
     p [] [ text "Shower option" ]
 
 
-displayGuess : Guess -> String
+displayGuess : CompleteGuess -> String
 displayGuess guess =
     "Display the guess here"
 
@@ -470,49 +469,55 @@ otherPlayers guesser allPlayers =
     takeWhileRight isNotGuesser allPlayers ++ takeWhile isNotGuesser allPlayers
 
 
-renderShowerOptions : Guess -> List Player -> Html msg
+renderShowerOptions : CompleteGuess -> List Player -> Html msg
 renderShowerOptions guess players =
-    div [] ([ h3 [] [ text (displayGuess guess) ] ] ++ List.map showerOption (otherPlayers guess.player players))
+    div [] ([ h3 [] [ text (displayGuess guess) ] ] ++ List.map showerOption (otherPlayers guess.guesser players))
 
 
-selectCards : Guess -> List Player -> Html Msg
-selectCards guess players =
-    case guess.person of
-        Nothing ->
+selectCards : InProgressGuess -> Html Msg
+selectCards guess =
+    case guess of
+        NothingIsSet ->
             selectCard personCards
 
-        Just _ ->
-            case guess.weapon of
-                Nothing ->
-                    selectCard weaponCards
+        PersonIsSet _ ->
+            selectCard weaponCards
 
-                Just _ ->
-                    case guess.room of
-                        Nothing ->
-                            selectCard roomCards
-
-                        Just _ ->
-                            renderShowerOptions guess players
+        WeaponIsSet _ _ ->
+            selectCard roomCards
 
 
 guessingForm : Model -> Html Msg
 guessingForm model =
-    case model.guess of
-        Nothing ->
-            selectGuesser model.players
+    case model.gameState of
+        Guessing _ inProgressGuess ->
+            selectCards inProgressGuess
 
-        Just guess ->
-            selectCards guess model.players
+        _ ->
+            div [] []
+
+
+revealingForm : Model -> Html Msg
+revealingForm model =
+    case model.gameState of
+        Revealing guess ->
+            renderShowerOptions guess model.players
+
+        _ ->
+            div [] []
 
 
 renderMainDisplay : Model -> Html Msg
 renderMainDisplay model =
-    case model.displaying of
-        Board ->
+    case model.gameState of
+        Investigating ->
             gameBoard model
 
-        Guessing ->
+        Guessing _ _ ->
             guessingForm model
+
+        Revealing _ ->
+            revealingForm model
 
 
 mainDisplay : Model -> Html Msg
@@ -529,7 +534,7 @@ view : Model -> Html Msg
 view model =
     div [ class "container" ]
         [ title
-        , viewsAndActions model
+        , setupNewGame model
         , mainDisplay model
         , resetGame
         ]
