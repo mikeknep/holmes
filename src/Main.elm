@@ -1,4 +1,4 @@
-module Main exposing (Card(..), DisplayMode(..), Guess, Model, Msg(..), Person(..), Room(..), Weapon(..), beginGuess, blankCell, blankRow, cardCell, cardPlayerCell, cardRow, displayCard, displayPerson, displayRoom, displayWeapon, gameBoard, guesserOption, guessingForm, headerRow, init, main, mainDisplay, people, personCards, playerColumnHeader, playerCountButton, possibleNumbersOfPlayers, possiblePlayers, renderMainDisplay, renderShowerOptions, resetGame, roomCards, rooms, selectCards, selectGuesser, selectNumberOfPlayers, title, toggleBoardView, toggleGuessView, update, view, viewsAndActions, weaponCards, weapons)
+module Main exposing (main)
 
 import Dict exposing (..)
 import Html exposing (..)
