@@ -1,5 +1,6 @@
 module Main exposing (main)
 
+import Browser exposing (element)
 import Dict exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (class)
@@ -29,7 +30,7 @@ openingCardholdingStatuses =
             personCards ++ weaponCards ++ roomCards
     in
     allCards
-        |> List.map toString
+        |> List.map Debug.toString
         |> List.map (\card -> ( card, MaybeHolding 0 ))
         |> Dict.fromList
 
@@ -285,10 +286,10 @@ attachCardToGuess card guess =
 setCardGuess : Model -> Card -> ( Model, Cmd Msg )
 setCardGuess model card =
     let
-        newGuess =
+        updatedGuess =
             Maybe.map (attachCardToGuess card) model.guess
     in
-    ( { model | guess = newGuess }, Cmd.none )
+    ( { model | guess = updatedGuess }, Cmd.none )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -356,7 +357,7 @@ title =
 
 playerCountButton : Int -> Html Msg
 playerCountButton numberOfPlayers =
-    button [ onClick (SetPlayers numberOfPlayers) ] [ text (toString numberOfPlayers) ]
+    button [ onClick (SetPlayers numberOfPlayers) ] [ text (String.fromInt numberOfPlayers) ]
 
 
 selectNumberOfPlayers : Html Msg
@@ -532,11 +533,11 @@ view model =
 ---- PROGRAM ----
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
+    Browser.element
         { view = view
-        , init = init
+        , init = \_ -> init
         , update = update
         , subscriptions = always Sub.none
         }
