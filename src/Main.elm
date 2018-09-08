@@ -5,6 +5,7 @@ import Dict exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
+import List.Extra exposing (takeWhile, takeWhileRight)
 
 
 
@@ -460,13 +461,18 @@ displayGuess guess =
     "Display the guess here"
 
 
+otherPlayers : Player -> List Player -> List Player
+otherPlayers guesser allPlayers =
+    let
+        isNotGuesser =
+            \player -> player /= guesser
+    in
+    takeWhileRight isNotGuesser allPlayers ++ takeWhile isNotGuesser allPlayers
+
+
 renderShowerOptions : Guess -> List Player -> Html msg
 renderShowerOptions guess players =
-    let
-        possibleShowers =
-            List.filter (\player -> player /= guess.player) players
-    in
-    div [] ([ h3 [] [ text (displayGuess guess) ] ] ++ List.map showerOption possibleShowers)
+    div [] ([ h3 [] [ text (displayGuess guess) ] ] ++ List.map showerOption (otherPlayers guess.player players))
 
 
 selectCards : Guess -> List Player -> Html Msg
