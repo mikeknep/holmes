@@ -225,10 +225,17 @@ type InProgressGuess
 ---- MODEL ----
 
 
+type SubjectOfInvestigation
+    = PlayerHand Player
+    | People
+    | Weapons
+    | Rooms
+
+
 type GameState
     = Guessing Player InProgressGuess
     | Revealing CompleteGuess
-    | Investigating
+    | Investigating SubjectOfInvestigation
 
 
 type alias Model =
@@ -240,7 +247,7 @@ type alias Model =
 init : ( Model, Cmd Msg )
 init =
     ( { players = []
-      , gameState = Investigating
+      , gameState = Investigating People
       }
     , Cmd.none
     )
@@ -253,6 +260,7 @@ init =
 type Msg
     = SetPlayers Int
     | ResetGame
+    | Investigate SubjectOfInvestigation
     | BeginGuess Player
     | SetPersonGuess Person
     | SetWeaponGuess Weapon
@@ -262,7 +270,7 @@ type Msg
 beginGuess : Model -> Player -> ( Model, Cmd Msg )
 beginGuess model player =
     case model.gameState of
-        Investigating ->
+        Investigating p ->
             ( { model | gameState = Guessing player NothingIsSet }, Cmd.none )
 
         _ ->
@@ -309,6 +317,11 @@ setRoomGuess model room =
             ( model, Cmd.none )
 
 
+investigate : Model -> SubjectOfInvestigation -> ( Model, Cmd Msg )
+investigate model subject =
+    ( { model | gameState = Investigating subject }, Cmd.none )
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -317,6 +330,9 @@ update msg model =
 
         ResetGame ->
             init
+
+        Investigate subject ->
+            investigate model subject
 
         BeginGuess player ->
             beginGuess model player
@@ -357,7 +373,7 @@ playerColumnHeader player =
 
 cardPlayerCell : Card -> Player -> Html msg
 cardPlayerCell card player =
-    td [] [ text (displayCard card ++ "--" ++ player.name) ]
+    td [] [ text (displayPlayerHoldingStatus player card) ]
 
 
 cardCell : Card -> Html msg
@@ -403,25 +419,14 @@ setupNewGame model =
             div [] []
 
 
-gameBoard : Model -> Html Msg
-gameBoard model =
+gameBoard : List Card -> Model -> Html Msg
+gameBoard cards model =
     div []
-        (List.map guesserOption model.players
-            ++ [ table [ class "table" ]
-                    ([ headerRow model.players ]
-                        ++ List.map (cardRow model.players) personCards
-                        ++ [ blankRow model.players ]
-                        ++ List.map (cardRow model.players) weaponCards
-                        ++ [ blankRow model.players ]
-                        ++ List.map (cardRow model.players) roomCards
-                    )
-               ]
-        )
-
-
-guesserOption : Player -> Html Msg
-guesserOption player =
-    a [ class "button", onClick (BeginGuess player) ] [ text player.name ]
+        [ table [ class "table" ]
+            ([ headerRow model.players ]
+                ++ List.map (cardRow model.players) cards
+            )
+        ]
 
 
 cardOption : Card -> Html Msg
@@ -507,11 +512,73 @@ revealingForm model =
             div [] []
 
 
+displayHoldingStatus : Maybe HoldingStatus -> String
+displayHoldingStatus holdingStatus =
+    case holdingStatus of
+        Just NotHolding ->
+            "No"
+
+        Just (MaybeHolding count) ->
+            "Maybe: " ++ String.fromInt count
+
+        Just Holding ->
+            "Yes!"
+
+        _ ->
+            "This should be impossible"
+
+
+displayPlayerHoldingStatus : Player -> Card -> String
+displayPlayerHoldingStatus player card =
+    let
+        cardKey =
+            Debug.toString card
+
+        holdingStatus =
+            Dict.get cardKey player.cardholdingStatuses
+    in
+    displayHoldingStatus holdingStatus
+
+
+playerCardStatusAsDataListEntry : Player -> Card -> List (Html Msg)
+playerCardStatusAsDataListEntry player card =
+    [ dt [] [ text (displayCard card) ]
+    , dd [] [ text (displayPlayerHoldingStatus player card) ]
+    ]
+
+
+playerView : Player -> Model -> Html Msg
+playerView player model =
+    div []
+        [ h1 [] [ text player.name ]
+        , p [] [ a [ class "button", onClick (BeginGuess player) ] [ text "Begin guess" ] ]
+        , dl [] (List.concatMap (playerCardStatusAsDataListEntry player) personCards)
+        , dl [] (List.concatMap (playerCardStatusAsDataListEntry player) weaponCards)
+        , dl [] (List.concatMap (playerCardStatusAsDataListEntry player) roomCards)
+        ]
+
+
+investigatingView : SubjectOfInvestigation -> Model -> Html Msg
+investigatingView subject model =
+    case subject of
+        PlayerHand player ->
+            playerView player model
+
+        People ->
+            gameBoard personCards model
+
+        Weapons ->
+            gameBoard weaponCards model
+
+        Rooms ->
+            gameBoard roomCards model
+
+
 renderMainDisplay : Model -> Html Msg
 renderMainDisplay model =
     case model.gameState of
-        Investigating ->
-            gameBoard model
+        Investigating subject ->
+            investigatingView subject model
 
         Guessing _ _ ->
             guessingForm model
@@ -530,11 +597,22 @@ mainDisplay model =
             renderMainDisplay model
 
 
+selectPlayer : Player -> Html Msg
+selectPlayer player =
+    a [ class "button", onClick (Investigate (PlayerHand player)) ] [ text player.name ]
+
+
+playerSelect : Model -> Html Msg
+playerSelect model =
+    div [] (List.map selectPlayer model.players)
+
+
 view : Model -> Html Msg
 view model =
     div [ class "container" ]
         [ title
         , setupNewGame model
+        , playerSelect model
         , mainDisplay model
         , resetGame
         ]
