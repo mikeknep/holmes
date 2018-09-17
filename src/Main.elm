@@ -383,6 +383,11 @@ playerHasCard model player card =
     )
 
 
+allOtherPlayersHaveShownNoCards : CompleteGuess -> List Player -> Bool
+allOtherPlayersHaveShownNoCards guess players =
+    List.length guess.noShows == List.length players - 1
+
+
 noCardsToShow : Model -> CompleteGuess -> Player -> ( Model, Cmd Msg )
 noCardsToShow model guess player =
     let
@@ -408,7 +413,11 @@ noCardsToShow model guess player =
             { guess | noShows = player :: guess.noShows }
 
         updatedState =
-            Revealing updatedGuess
+            if allOtherPlayersHaveShownNoCards updatedGuess model.players then
+                Investigating (PlayerHand guess.guesser)
+
+            else
+                Revealing updatedGuess
     in
     ( { players = updatedPlayers
       , gameState = updatedState
@@ -564,7 +573,6 @@ showerOption guess player =
 
 
 -- yes/no checkboxes
--- no :: *last* player to say no should exit the page (avoid a separate 'nobody showed a card' button)
 -- yes :: update player's status for those three cards, clears guess, returns to board view
 
 
