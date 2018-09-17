@@ -486,18 +486,32 @@ selectCard cards =
     div [] (List.map cardOption cards)
 
 
-showerOption : Player -> Html msg
+showerOption : Player -> List (Html msg)
 showerOption player =
-    -- yes/no checkboxes
-    -- no :: update player's status for those three cards
-    -- no :: *last* player to say no should exit the page (avoid a separate 'nobody showed a card' button)
-    -- yes :: update player's status for those three cards, clears guess, returns to board view
-    p [] [ text "Shower option" ]
+    [ dt [] [ text player.name ]
+    , dd []
+        [ button [] [ text "yes" ]
+        , button [] [ text "no" ]
+        ]
+    ]
+
+
+
+-- yes/no checkboxes
+-- no :: update player's status for those three cards
+-- no :: *last* player to say no should exit the page (avoid a separate 'nobody showed a card' button)
+-- yes :: update player's status for those three cards, clears guess, returns to board view
 
 
 displayGuess : CompleteGuess -> String
 displayGuess guess =
-    "Display the guess here"
+    guess.guesser.name
+        ++ " :: "
+        ++ displayPerson guess.person
+        ++ " :: "
+        ++ displayWeapon guess.weapon
+        ++ " :: "
+        ++ displayRoom guess.room
 
 
 otherPlayers : Player -> List Player -> List Player
@@ -511,7 +525,10 @@ otherPlayers guesser allPlayers =
 
 renderShowerOptions : CompleteGuess -> List Player -> Html msg
 renderShowerOptions guess players =
-    div [] ([ h3 [] [ text (displayGuess guess) ] ] ++ List.map showerOption (otherPlayers guess.guesser players))
+    div []
+        [ h3 [] [ text (displayGuess guess) ]
+        , dl [] (List.concatMap showerOption (otherPlayers guess.guesser players))
+        ]
 
 
 selectCards : InProgressGuess -> Html Msg
