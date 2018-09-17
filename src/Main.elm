@@ -265,6 +265,7 @@ type Msg
     | SetPersonGuess Person
     | SetWeaponGuess Weapon
     | SetRoomGuess Room
+    | PlayerHasCard Player Card
 
 
 beginGuess : Model -> Player -> ( Model, Cmd Msg )
@@ -322,6 +323,37 @@ investigate model subject =
     ( { model | gameState = Investigating subject }, Cmd.none )
 
 
+updatePlayer : Player -> Player -> Player -> Player
+updatePlayer updated original this =
+    if original == this then
+        updated
+
+    else
+        this
+
+
+playerHasCard : Model -> Player -> Card -> ( Model, Cmd Msg )
+playerHasCard model player card =
+    let
+        updatedCardholdingStatuses =
+            Dict.update (Debug.toString card) (\_ -> Just Holding) player.cardholdingStatuses
+
+        updatedPlayer =
+            { player | cardholdingStatuses = updatedCardholdingStatuses }
+
+        updatedPlayers =
+            List.map (updatePlayer updatedPlayer player) model.players
+
+        nextGameState =
+            Investigating (PlayerHand updatedPlayer)
+    in
+    ( { players = updatedPlayers
+      , gameState = nextGameState
+      }
+    , Cmd.none
+    )
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -345,6 +377,9 @@ update msg model =
 
         SetRoomGuess room ->
             setRoomGuess model room
+
+        PlayerHasCard player card ->
+            playerHasCard model player card
 
 
 
@@ -543,7 +578,10 @@ displayPlayerHoldingStatus player card =
 playerCardStatusAsDataListEntry : Player -> Card -> List (Html Msg)
 playerCardStatusAsDataListEntry player card =
     [ dt [] [ text (displayCard card) ]
-    , dd [] [ text (displayPlayerHoldingStatus player card) ]
+    , dd []
+        [ text (displayPlayerHoldingStatus player card)
+        , button [ onClick (PlayerHasCard player card) ] [ text "reveal" ]
+        ]
     ]
 
 
