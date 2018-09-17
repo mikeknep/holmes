@@ -24,6 +24,34 @@ type alias Player =
     }
 
 
+keyForPerson : Person -> String
+keyForPerson person =
+    Debug.toString person
+
+
+keyForWeapon : Weapon -> String
+keyForWeapon weapon =
+    Debug.toString weapon
+
+
+keyForRoom : Room -> String
+keyForRoom room =
+    Debug.toString room
+
+
+keyForCard : Card -> String
+keyForCard card =
+    case card of
+        PersonTag person ->
+            keyForPerson person
+
+        WeaponTag weapon ->
+            keyForWeapon weapon
+
+        RoomTag room ->
+            keyForRoom room
+
+
 openingCardholdingStatuses : Dict String HoldingStatus
 openingCardholdingStatuses =
     let
@@ -31,7 +59,7 @@ openingCardholdingStatuses =
             personCards ++ weaponCards ++ roomCards
     in
     allCards
-        |> List.map Debug.toString
+        |> List.map keyForCard
         |> List.map (\card -> ( card, MaybeHolding 0 ))
         |> Dict.fromList
 
@@ -266,6 +294,7 @@ type Msg
     | SetWeaponGuess Weapon
     | SetRoomGuess Room
     | PlayerHasCard Player Card
+    | NoCardsToShow CompleteGuess Player
 
 
 beginGuess : Model -> Player -> ( Model, Cmd Msg )
@@ -336,7 +365,7 @@ playerHasCard : Model -> Player -> Card -> ( Model, Cmd Msg )
 playerHasCard model player card =
     let
         updatedCardholdingStatuses =
-            Dict.update (Debug.toString card) (\_ -> Just Holding) player.cardholdingStatuses
+            Dict.update (keyForCard card) (\_ -> Just Holding) player.cardholdingStatuses
 
         updatedPlayer =
             { player | cardholdingStatuses = updatedCardholdingStatuses }
@@ -349,6 +378,40 @@ playerHasCard model player card =
     in
     ( { players = updatedPlayers
       , gameState = nextGameState
+      }
+    , Cmd.none
+    )
+
+
+noCardsToShow : Model -> CompleteGuess -> Player -> ( Model, Cmd Msg )
+noCardsToShow model guess player =
+    let
+        noPerson =
+            Dict.insert (keyForPerson guess.person) NotHolding player.cardholdingStatuses
+
+        noWeapon =
+            Dict.insert (keyForWeapon guess.weapon) NotHolding noPerson
+
+        noRoom =
+            Dict.insert (keyForRoom guess.room) NotHolding noWeapon
+
+        noneOfTheseCards =
+            noRoom
+
+        updatedPlayer =
+            { player | cardholdingStatuses = noneOfTheseCards }
+
+        updatedPlayers =
+            List.map (updatePlayer updatedPlayer player) model.players
+
+        updatedGuess =
+            { guess | noShows = player :: guess.noShows }
+
+        updatedState =
+            Revealing updatedGuess
+    in
+    ( { players = updatedPlayers
+      , gameState = updatedState
       }
     , Cmd.none
     )
@@ -380,6 +443,9 @@ update msg model =
 
         PlayerHasCard player card ->
             playerHasCard model player card
+
+        NoCardsToShow guess player ->
+            noCardsToShow model guess player
 
 
 
@@ -486,19 +552,18 @@ selectCard cards =
     div [] (List.map cardOption cards)
 
 
-showerOption : Player -> List (Html msg)
-showerOption player =
+showerOption : CompleteGuess -> Player -> List (Html Msg)
+showerOption guess player =
     [ dt [] [ text player.name ]
     , dd []
         [ button [] [ text "yes" ]
-        , button [] [ text "no" ]
+        , button [ onClick (NoCardsToShow guess player) ] [ text "no" ]
         ]
     ]
 
 
 
 -- yes/no checkboxes
--- no :: update player's status for those three cards
 -- no :: *last* player to say no should exit the page (avoid a separate 'nobody showed a card' button)
 -- yes :: update player's status for those three cards, clears guess, returns to board view
 
@@ -523,11 +588,11 @@ otherPlayers guesser allPlayers =
     takeWhileRight isNotGuesser allPlayers ++ takeWhile isNotGuesser allPlayers
 
 
-renderShowerOptions : CompleteGuess -> List Player -> Html msg
+renderShowerOptions : CompleteGuess -> List Player -> Html Msg
 renderShowerOptions guess players =
     div []
         [ h3 [] [ text (displayGuess guess) ]
-        , dl [] (List.concatMap showerOption (otherPlayers guess.guesser players))
+        , dl [] (List.concatMap (showerOption guess) (otherPlayers guess.guesser players))
         ]
 
 
@@ -583,11 +648,8 @@ displayHoldingStatus holdingStatus =
 displayPlayerHoldingStatus : Player -> Card -> String
 displayPlayerHoldingStatus player card =
     let
-        cardKey =
-            Debug.toString card
-
         holdingStatus =
-            Dict.get cardKey player.cardholdingStatuses
+            Dict.get (keyForCard card) player.cardholdingStatuses
     in
     displayHoldingStatus holdingStatus
 
