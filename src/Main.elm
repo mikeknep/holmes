@@ -722,14 +722,24 @@ mainDisplay model =
             renderMainDisplay model
 
 
-selectPlayer : Player -> Html Msg
-selectPlayer player =
+investigatePlayerButton : Player -> Html Msg
+investigatePlayerButton player =
     a [ class "button", onClick (Investigate (PlayerHand player)) ] [ text player.name ]
 
 
 playerSelect : Model -> Html Msg
 playerSelect model =
-    div [] (List.map selectPlayer model.players)
+    div [] (List.map investigatePlayerButton model.players)
+
+
+investigateCardTypeButton : SubjectOfInvestigation -> Html Msg
+investigateCardTypeButton cardType =
+    a [ class "button", onClick (Investigate cardType) ] [ text (Debug.toString cardType) ]
+
+
+cardTypeSelect : Model -> Html Msg
+cardTypeSelect model =
+    div [] (List.map investigateCardTypeButton [ People, Weapons, Rooms ])
 
 
 view : Model -> Html Msg
@@ -738,6 +748,7 @@ view model =
         [ title
         , setupNewGame model
         , playerSelect model
+        , cardTypeSelect model
         , mainDisplay model
         , resetGame
         ]
