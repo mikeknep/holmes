@@ -483,7 +483,11 @@ playerColumnHeader player =
 
 cardPlayerCell : Card -> Player -> Html msg
 cardPlayerCell card player =
-    td [] [ text (displayPlayerHoldingStatus player card) ]
+    let
+        holdingStatus =
+            getHoldingStatus player card
+    in
+    td [] [ text (displayHoldingStatus holdingStatus) ]
 
 
 cardCell : Card -> Html msg
@@ -653,22 +657,34 @@ displayHoldingStatus holdingStatus =
             "This should be impossible"
 
 
-displayPlayerHoldingStatus : Player -> Card -> String
-displayPlayerHoldingStatus player card =
+getHoldingStatus : Player -> Card -> Maybe HoldingStatus
+getHoldingStatus player card =
+    Dict.get (keyForCard card) player.cardholdingStatuses
+
+
+playerCardStatusDescListValue : Player -> Card -> List (Html Msg)
+playerCardStatusDescListValue player card =
     let
         holdingStatus =
-            Dict.get (keyForCard card) player.cardholdingStatuses
+            getHoldingStatus player card
+
+        statusText =
+            text (displayHoldingStatus holdingStatus)
     in
-    displayHoldingStatus holdingStatus
+    case holdingStatus of
+        Just (MaybeHolding count) ->
+            [ statusText
+            , button [ onClick (PlayerHasCard player card) ] [ text "reveal" ]
+            ]
+
+        _ ->
+            [ statusText ]
 
 
-playerCardStatusAsDataListEntry : Player -> Card -> List (Html Msg)
-playerCardStatusAsDataListEntry player card =
+playerCardStatusAsDescriptionListEntry : Player -> Card -> List (Html Msg)
+playerCardStatusAsDescriptionListEntry player card =
     [ dt [] [ text (displayCard card) ]
-    , dd []
-        [ text (displayPlayerHoldingStatus player card)
-        , button [ onClick (PlayerHasCard player card) ] [ text "reveal" ]
-        ]
+    , dd [] (playerCardStatusDescListValue player card)
     ]
 
 
@@ -677,9 +693,9 @@ playerView player model =
     div []
         [ h1 [] [ text player.name ]
         , p [] [ a [ class "button", onClick (BeginGuess player) ] [ text "Begin guess" ] ]
-        , dl [] (List.concatMap (playerCardStatusAsDataListEntry player) personCards)
-        , dl [] (List.concatMap (playerCardStatusAsDataListEntry player) weaponCards)
-        , dl [] (List.concatMap (playerCardStatusAsDataListEntry player) roomCards)
+        , dl [] (List.concatMap (playerCardStatusAsDescriptionListEntry player) personCards)
+        , dl [] (List.concatMap (playerCardStatusAsDescriptionListEntry player) weaponCards)
+        , dl [] (List.concatMap (playerCardStatusAsDescriptionListEntry player) roomCards)
         ]
 
 
