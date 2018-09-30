@@ -295,6 +295,7 @@ type Msg
     | SetRoomGuess Room
     | PlayerHasCard Player Card
     | NoCardsToShow CompleteGuess Player
+    | ShowsSomeCard CompleteGuess Player
 
 
 beginGuess : Model -> Player -> ( Model, Cmd Msg )
@@ -426,6 +427,47 @@ noCardsToShow model guess player =
     )
 
 
+incrementMaybe : Maybe HoldingStatus -> Maybe HoldingStatus
+incrementMaybe status =
+    case status of
+        Just (MaybeHolding count) ->
+            Just (MaybeHolding (count + 1))
+
+        _ ->
+            status
+
+
+showsSomeCard : Model -> CompleteGuess -> Player -> ( Model, Cmd Msg )
+showsSomeCard model guess player =
+    let
+        maybePerson =
+            Dict.update (keyForPerson guess.person) incrementMaybe player.cardholdingStatuses
+
+        maybeWeapon =
+            Dict.update (keyForWeapon guess.weapon) incrementMaybe maybePerson
+
+        maybeRoom =
+            Dict.update (keyForRoom guess.room) incrementMaybe maybeWeapon
+
+        oneOfTheseCards =
+            maybeRoom
+
+        updatedPlayer =
+            { player | cardholdingStatuses = oneOfTheseCards }
+
+        updatedPlayers =
+            List.map (updatePlayer updatedPlayer player) model.players
+
+        updatedState =
+            Investigating (PlayerHand updatedPlayer)
+    in
+    ( { players = updatedPlayers
+      , gameState = updatedState
+      }
+    , Cmd.none
+    )
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -455,6 +497,9 @@ update msg model =
 
         NoCardsToShow guess player ->
             noCardsToShow model guess player
+
+        ShowsSomeCard guess player ->
+            showsSomeCard model guess player
 
 
 
@@ -569,15 +614,10 @@ showerOption : CompleteGuess -> Player -> List (Html Msg)
 showerOption guess player =
     [ dt [] [ text player.name ]
     , dd []
-        [ button [] [ text "yes" ]
+        [ button [ onClick (ShowsSomeCard guess player) ] [ text "yes" ]
         , button [ onClick (NoCardsToShow guess player) ] [ text "no" ]
         ]
     ]
-
-
-
--- yes/no checkboxes
--- yes :: update player's status for those three cards, clears guess, returns to board view
 
 
 displayGuess : CompleteGuess -> String
