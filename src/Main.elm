@@ -708,12 +708,16 @@ playerCardStatusAsDescriptionListEntry facts player card =
 
 playerView : Player -> Model -> Html Msg
 playerView player model =
+    let
+        playerCardStatusAsDL =
+            playerCardStatusAsDescriptionListEntry model.facts player
+    in
     div []
         [ h1 [] [ text player.name ]
         , p [] [ a [ class "button", onClick (BeginGuess player) ] [ text "Begin guess" ] ]
-        , dl [] (List.concatMap (playerCardStatusAsDescriptionListEntry model.facts player) personCards)
-        , dl [] (List.concatMap (playerCardStatusAsDescriptionListEntry model.facts player) weaponCards)
-        , dl [] (List.concatMap (playerCardStatusAsDescriptionListEntry model.facts player) roomCards)
+        , dl [] (List.concatMap playerCardStatusAsDL personCards)
+        , dl [] (List.concatMap playerCardStatusAsDL weaponCards)
+        , dl [] (List.concatMap playerCardStatusAsDL roomCards)
         ]
 
 
