@@ -488,6 +488,12 @@ incrementMaybe status =
 showsSomeCard : Model -> CompleteGuess -> Player -> ( Model, Cmd Msg )
 showsSomeCard model guess player =
     let
+        updatedFacts =
+            model.facts
+                |> Dict.update ( keyForPerson guess.person, keyForPlayer player ) incrementMaybe
+                |> Dict.update ( keyForWeapon guess.weapon, keyForPlayer player ) incrementMaybe
+                |> Dict.update ( keyForRoom guess.room, keyForPlayer player ) incrementMaybe
+
         maybePerson =
             Dict.update (keyForPerson guess.person) incrementMaybe player.cardholdingStatuses
 
@@ -511,7 +517,7 @@ showsSomeCard model guess player =
     in
     ( { players = updatedPlayers
       , gameState = updatedState
-      , facts = model.facts
+      , facts = updatedFacts
       }
     , Cmd.none
     )
