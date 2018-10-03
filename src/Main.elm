@@ -24,6 +24,11 @@ type alias Player =
     }
 
 
+keyForPlayer : Player -> String
+keyForPlayer player =
+    player.name
+
+
 keyForPerson : Person -> String
 keyForPerson person =
     Debug.toString person
@@ -266,9 +271,14 @@ type GameState
     | Investigating SubjectOfInvestigation
 
 
+type alias Facts =
+    Dict ( String, String ) HoldingStatus
+
+
 type alias Model =
     { players : List Player
     , gameState : GameState
+    , facts : Facts
     }
 
 
@@ -276,6 +286,7 @@ init : ( Model, Cmd Msg )
 init =
     ( { players = []
       , gameState = Investigating People
+      , facts = Dict.empty
       }
     , Cmd.none
     )
@@ -296,6 +307,32 @@ type Msg
     | PlayerHasCard Player Card
     | NoCardsToShow CompleteGuess Player
     | ShowsSomeCard CompleteGuess Player
+
+
+setInitialFacts : Card -> Player -> Facts -> Facts
+setInitialFacts card player facts =
+    Dict.insert ( keyForCard card, keyForPlayer player ) (MaybeHolding 0) facts
+
+
+openingFacts : List Player -> Facts
+openingFacts players =
+    let
+        allCards =
+            personCards ++ weaponCards ++ roomCards
+
+        reducer =
+            \card facts -> List.foldl (setInitialFacts card) facts players
+    in
+    List.foldl reducer Dict.empty allCards
+
+
+setPlayers : Model -> Int -> ( Model, Cmd Msg )
+setPlayers model playerCount =
+    let
+        gamePlayers =
+            List.take playerCount possiblePlayers
+    in
+    ( { model | players = gamePlayers, facts = openingFacts gamePlayers }, Cmd.none )
 
 
 beginGuess : Model -> Player -> ( Model, Cmd Msg )
@@ -379,6 +416,7 @@ playerHasCard model player card =
     in
     ( { players = updatedPlayers
       , gameState = nextGameState
+      , facts = model.facts
       }
     , Cmd.none
     )
@@ -422,6 +460,7 @@ noCardsToShow model guess player =
     in
     ( { players = updatedPlayers
       , gameState = updatedState
+      , facts = model.facts
       }
     , Cmd.none
     )
@@ -463,6 +502,7 @@ showsSomeCard model guess player =
     in
     ( { players = updatedPlayers
       , gameState = updatedState
+      , facts = model.facts
       }
     , Cmd.none
     )
@@ -472,7 +512,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         SetPlayers playerCount ->
-            ( { model | players = List.take playerCount possiblePlayers }, Cmd.none )
+            setPlayers model playerCount
 
         ResetGame ->
             init
