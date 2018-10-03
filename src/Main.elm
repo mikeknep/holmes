@@ -433,6 +433,12 @@ allOtherPlayersHaveShownNoCards guess players =
 noCardsToShow : Model -> CompleteGuess -> Player -> ( Model, Cmd Msg )
 noCardsToShow model guess player =
     let
+        updatedFacts =
+            model.facts
+                |> Dict.insert ( keyForPerson guess.person, keyForPlayer player ) NotHolding
+                |> Dict.insert ( keyForWeapon guess.weapon, keyForPlayer player ) NotHolding
+                |> Dict.insert ( keyForRoom guess.room, keyForPlayer player ) NotHolding
+
         noPerson =
             Dict.insert (keyForPerson guess.person) NotHolding player.cardholdingStatuses
 
@@ -463,7 +469,7 @@ noCardsToShow model guess player =
     in
     ( { players = updatedPlayers
       , gameState = updatedState
-      , facts = model.facts
+      , facts = updatedFacts
       }
     , Cmd.none
     )
