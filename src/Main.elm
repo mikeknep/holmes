@@ -20,7 +20,6 @@ type HoldingStatus
 
 type alias Player =
     { name : String
-    , cardholdingStatuses : Dict String HoldingStatus
     }
 
 
@@ -57,22 +56,9 @@ keyForCard card =
             keyForRoom room
 
 
-openingCardholdingStatuses : Dict String HoldingStatus
-openingCardholdingStatuses =
-    let
-        allCards =
-            personCards ++ weaponCards ++ roomCards
-    in
-    allCards
-        |> List.map keyForCard
-        |> List.map (\card -> ( card, MaybeHolding 0 ))
-        |> Dict.fromList
-
-
 createPlayer : String -> Player
 createPlayer name =
     { name = name
-    , cardholdingStatuses = openingCardholdingStatuses
     }
 
 
@@ -390,37 +376,16 @@ investigate model subject =
     ( { model | gameState = Investigating subject }, Cmd.none )
 
 
-updatePlayer : Player -> Player -> Player -> Player
-updatePlayer updated original this =
-    if original == this then
-        updated
-
-    else
-        this
-
-
 playerHasCard : Model -> Player -> Card -> ( Model, Cmd Msg )
 playerHasCard model player card =
     let
         updatedFacts =
             Dict.update ( keyForCard card, keyForPlayer player ) (\_ -> Just Holding) model.facts
 
-        updatedCardholdingStatuses =
-            Dict.update (keyForCard card) (\_ -> Just Holding) player.cardholdingStatuses
-
-        updatedPlayer =
-            { player | cardholdingStatuses = updatedCardholdingStatuses }
-
-        updatedPlayers =
-            List.map (updatePlayer updatedPlayer player) model.players
-
         nextGameState =
-            Investigating (PlayerHand updatedPlayer)
+            Investigating (PlayerHand player)
     in
-    ( { players = updatedPlayers
-      , gameState = nextGameState
-      , facts = updatedFacts
-      }
+    ( { model | gameState = nextGameState, facts = updatedFacts }
     , Cmd.none
     )
 
@@ -439,24 +404,6 @@ noCardsToShow model guess player =
                 |> Dict.insert ( keyForWeapon guess.weapon, keyForPlayer player ) NotHolding
                 |> Dict.insert ( keyForRoom guess.room, keyForPlayer player ) NotHolding
 
-        noPerson =
-            Dict.insert (keyForPerson guess.person) NotHolding player.cardholdingStatuses
-
-        noWeapon =
-            Dict.insert (keyForWeapon guess.weapon) NotHolding noPerson
-
-        noRoom =
-            Dict.insert (keyForRoom guess.room) NotHolding noWeapon
-
-        noneOfTheseCards =
-            noRoom
-
-        updatedPlayer =
-            { player | cardholdingStatuses = noneOfTheseCards }
-
-        updatedPlayers =
-            List.map (updatePlayer updatedPlayer player) model.players
-
         updatedGuess =
             { guess | noShows = player :: guess.noShows }
 
@@ -467,10 +414,7 @@ noCardsToShow model guess player =
             else
                 Revealing updatedGuess
     in
-    ( { players = updatedPlayers
-      , gameState = updatedState
-      , facts = updatedFacts
-      }
+    ( { model | gameState = updatedState, facts = updatedFacts }
     , Cmd.none
     )
 
@@ -494,31 +438,10 @@ showsSomeCard model guess player =
                 |> Dict.update ( keyForWeapon guess.weapon, keyForPlayer player ) incrementMaybe
                 |> Dict.update ( keyForRoom guess.room, keyForPlayer player ) incrementMaybe
 
-        maybePerson =
-            Dict.update (keyForPerson guess.person) incrementMaybe player.cardholdingStatuses
-
-        maybeWeapon =
-            Dict.update (keyForWeapon guess.weapon) incrementMaybe maybePerson
-
-        maybeRoom =
-            Dict.update (keyForRoom guess.room) incrementMaybe maybeWeapon
-
-        oneOfTheseCards =
-            maybeRoom
-
-        updatedPlayer =
-            { player | cardholdingStatuses = oneOfTheseCards }
-
-        updatedPlayers =
-            List.map (updatePlayer updatedPlayer player) model.players
-
         updatedState =
-            Investigating (PlayerHand updatedPlayer)
+            Investigating (PlayerHand player)
     in
-    ( { players = updatedPlayers
-      , gameState = updatedState
-      , facts = updatedFacts
-      }
+    ( { model | gameState = updatedState, facts = updatedFacts }
     , Cmd.none
     )
 
@@ -581,11 +504,11 @@ playerColumnHeader player =
     th [] [ text player.name ]
 
 
-cardPlayerCell : Card -> Player -> Html msg
-cardPlayerCell card player =
+cardPlayerCell : Facts -> Card -> Player -> Html msg
+cardPlayerCell facts card player =
     let
         holdingStatus =
-            getHoldingStatus player card
+            getHoldingStatus facts player card
     in
     td [] [ text (displayHoldingStatus holdingStatus) ]
 
@@ -595,9 +518,9 @@ cardCell card =
     td [] [ text (displayCard card) ]
 
 
-cardRow : List Player -> Card -> Html msg
-cardRow players card =
-    tr [] (cardCell card :: List.map (cardPlayerCell card) players)
+cardRow : Facts -> List Player -> Card -> Html msg
+cardRow facts players card =
+    tr [] (cardCell card :: List.map (cardPlayerCell facts card) players)
 
 
 title : Html msg
@@ -638,7 +561,7 @@ gameBoard cards model =
     div []
         [ table [ class "table" ]
             ([ headerRow model.players ]
-                ++ List.map (cardRow model.players) cards
+                ++ List.map (cardRow model.facts model.players) cards
             )
         ]
 
@@ -752,16 +675,16 @@ displayHoldingStatus holdingStatus =
             "This should be impossible"
 
 
-getHoldingStatus : Player -> Card -> Maybe HoldingStatus
-getHoldingStatus player card =
-    Dict.get (keyForCard card) player.cardholdingStatuses
+getHoldingStatus : Facts -> Player -> Card -> Maybe HoldingStatus
+getHoldingStatus facts player card =
+    Dict.get ( keyForCard card, keyForPlayer player ) facts
 
 
-playerCardStatusDescListValue : Player -> Card -> List (Html Msg)
-playerCardStatusDescListValue player card =
+playerCardStatusDescListValue : Facts -> Player -> Card -> List (Html Msg)
+playerCardStatusDescListValue facts player card =
     let
         holdingStatus =
-            getHoldingStatus player card
+            getHoldingStatus facts player card
 
         statusText =
             text (displayHoldingStatus holdingStatus)
@@ -776,10 +699,10 @@ playerCardStatusDescListValue player card =
             [ statusText ]
 
 
-playerCardStatusAsDescriptionListEntry : Player -> Card -> List (Html Msg)
-playerCardStatusAsDescriptionListEntry player card =
+playerCardStatusAsDescriptionListEntry : Facts -> Player -> Card -> List (Html Msg)
+playerCardStatusAsDescriptionListEntry facts player card =
     [ dt [] [ text (displayCard card) ]
-    , dd [] (playerCardStatusDescListValue player card)
+    , dd [] (playerCardStatusDescListValue facts player card)
     ]
 
 
@@ -788,9 +711,9 @@ playerView player model =
     div []
         [ h1 [] [ text player.name ]
         , p [] [ a [ class "button", onClick (BeginGuess player) ] [ text "Begin guess" ] ]
-        , dl [] (List.concatMap (playerCardStatusAsDescriptionListEntry player) personCards)
-        , dl [] (List.concatMap (playerCardStatusAsDescriptionListEntry player) weaponCards)
-        , dl [] (List.concatMap (playerCardStatusAsDescriptionListEntry player) roomCards)
+        , dl [] (List.concatMap (playerCardStatusAsDescriptionListEntry model.facts player) personCards)
+        , dl [] (List.concatMap (playerCardStatusAsDescriptionListEntry model.facts player) weaponCards)
+        , dl [] (List.concatMap (playerCardStatusAsDescriptionListEntry model.facts player) roomCards)
         ]
 
 
