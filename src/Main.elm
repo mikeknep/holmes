@@ -402,6 +402,9 @@ updatePlayer updated original this =
 playerHasCard : Model -> Player -> Card -> ( Model, Cmd Msg )
 playerHasCard model player card =
     let
+        updatedFacts =
+            Dict.update ( keyForCard card, keyForPlayer player ) (\_ -> Just Holding) model.facts
+
         updatedCardholdingStatuses =
             Dict.update (keyForCard card) (\_ -> Just Holding) player.cardholdingStatuses
 
@@ -416,7 +419,7 @@ playerHasCard model player card =
     in
     ( { players = updatedPlayers
       , gameState = nextGameState
-      , facts = model.facts
+      , facts = updatedFacts
       }
     , Cmd.none
     )
