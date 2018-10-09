@@ -231,6 +231,7 @@ type alias CompleteGuess =
     , weapon : Weapon
     , room : Room
     , noShows : List Player
+    , shower : Maybe Player
     }
 
 
@@ -265,6 +266,7 @@ type alias Model =
     { players : List Player
     , gameState : GameState
     , facts : Facts
+    , history : List CompleteGuess
     }
 
 
@@ -273,6 +275,7 @@ init =
     ( { players = []
       , gameState = Investigating People
       , facts = Dict.empty
+      , history = []
       }
     , Cmd.none
     )
@@ -358,6 +361,7 @@ buildCompleteGuess guesser person weapon room =
     , weapon = weapon
     , room = room
     , noShows = []
+    , shower = Nothing
     }
 
 
@@ -398,23 +402,37 @@ allOtherPlayersHaveShownNoCards guess players =
 noCardsToShow : Model -> CompleteGuess -> Player -> ( Model, Cmd Msg )
 noCardsToShow model guess player =
     let
+        updatedGuess =
+            { guess | noShows = player :: guess.noShows }
+
+        goneAroundTheCircle =
+            allOtherPlayersHaveShownNoCards updatedGuess model.players
+
+        updatedHistory =
+            if goneAroundTheCircle then
+                guess :: model.history
+
+            else
+                model.history
+
         updatedFacts =
             model.facts
                 |> Dict.insert ( keyForPerson guess.person, keyForPlayer player ) NotHolding
                 |> Dict.insert ( keyForWeapon guess.weapon, keyForPlayer player ) NotHolding
                 |> Dict.insert ( keyForRoom guess.room, keyForPlayer player ) NotHolding
 
-        updatedGuess =
-            { guess | noShows = player :: guess.noShows }
-
         updatedState =
-            if allOtherPlayersHaveShownNoCards updatedGuess model.players then
-                Investigating (PlayerHand guess.guesser)
+            if goneAroundTheCircle then
+                Investigating (PlayerHand updatedGuess.guesser)
 
             else
                 Revealing updatedGuess
     in
-    ( { model | gameState = updatedState, facts = updatedFacts }
+    ( { model
+        | gameState = updatedState
+        , facts = updatedFacts
+        , history = updatedHistory
+      }
     , Cmd.none
     )
 
@@ -432,6 +450,12 @@ incrementMaybe status =
 showsSomeCard : Model -> CompleteGuess -> Player -> ( Model, Cmd Msg )
 showsSomeCard model guess player =
     let
+        updatedGuess =
+            { guess | shower = Just player }
+
+        updatedHistory =
+            updatedGuess :: model.history
+
         updatedFacts =
             model.facts
                 |> Dict.update ( keyForPerson guess.person, keyForPlayer player ) incrementMaybe
@@ -441,7 +465,11 @@ showsSomeCard model guess player =
         updatedState =
             Investigating (PlayerHand player)
     in
-    ( { model | gameState = updatedState, facts = updatedFacts }
+    ( { model
+        | gameState = updatedState
+        , facts = updatedFacts
+        , history = updatedHistory
+      }
     , Cmd.none
     )
 
