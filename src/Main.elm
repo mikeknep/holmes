@@ -130,7 +130,9 @@ playerHasCard : Model -> Player -> Card -> ( Model, Cmd Msg )
 playerHasCard model player card =
     let
         updatedFacts =
-            Facts.setPlayerHasCard card player model.facts
+            model.facts
+                |> Facts.setPlayerHasCard card player
+                |> Facts.analyze model.history
 
         nextGameState =
             Investigating (PlayerHand player)
@@ -166,6 +168,7 @@ noCardsToShow model guess player =
                 |> Facts.setPlayerDoesNotHaveCard (PersonTag guess.person) player
                 |> Facts.setPlayerDoesNotHaveCard (WeaponTag guess.weapon) player
                 |> Facts.setPlayerDoesNotHaveCard (RoomTag guess.room) player
+                |> Facts.analyze updatedHistory
 
         updatedState =
             if goneAroundTheCircle then
@@ -197,6 +200,7 @@ showsSomeCard model guess player =
                 |> Facts.setPlayerMightHaveCard (PersonTag guess.person) player
                 |> Facts.setPlayerMightHaveCard (WeaponTag guess.weapon) player
                 |> Facts.setPlayerMightHaveCard (RoomTag guess.room) player
+                |> Facts.analyze updatedHistory
 
         updatedState =
             Investigating (PlayerHand player)

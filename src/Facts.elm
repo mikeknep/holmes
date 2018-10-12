@@ -1,6 +1,7 @@
 module Facts exposing
     ( Facts
     , HoldingStatus(..)
+    , analyze
     , getHoldingStatus
     , initFacts
     , openingFacts
@@ -10,7 +11,7 @@ module Facts exposing
     )
 
 import Dict exposing (Dict, empty, get, insert, update)
-import Domain exposing (Card(..), Person, Player, Room, Weapon)
+import Domain exposing (Card(..), CompleteGuess, Person, Player, Room, Weapon)
 
 
 type HoldingStatus
@@ -40,6 +41,19 @@ openingFacts cards players =
             \card facts -> List.foldl (setInitialFacts card) facts players
     in
     List.foldl reducer Dict.empty cards
+
+
+analyze : List CompleteGuess -> Facts -> Facts
+analyze history facts =
+    let
+        newFacts =
+            facts
+    in
+    if newFacts == facts then
+        newFacts
+
+    else
+        analyze history newFacts
 
 
 setPlayerMightHaveCard : Card -> Player -> Facts -> Facts
