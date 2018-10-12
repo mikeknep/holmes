@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import Browser exposing (element)
-import Dict exposing (..)
+import Facts exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
@@ -10,12 +10,6 @@ import List.Extra exposing (takeWhile, takeWhileRight)
 
 
 ---- DOMAIN ---
-
-
-type HoldingStatus
-    = NotHolding
-    | MaybeHolding Int
-    | Holding
 
 
 type alias Player =
@@ -258,10 +252,6 @@ type GameState
     | Investigating SubjectOfInvestigation
 
 
-type alias Facts =
-    Dict ( String, String ) HoldingStatus
-
-
 type alias Model =
     { players : List Player
     , gameState : GameState
@@ -274,7 +264,7 @@ init : ( Model, Cmd Msg )
 init =
     ( { players = []
       , gameState = Investigating People
-      , facts = Dict.empty
+      , facts = initFacts
       , history = []
       }
     , Cmd.none
@@ -298,30 +288,27 @@ type Msg
     | ShowsSomeCard CompleteGuess Player
 
 
-setInitialFacts : Card -> Player -> Facts -> Facts
-setInitialFacts card player facts =
-    Dict.insert ( keyForCard card, keyForPlayer player ) (MaybeHolding 0) facts
-
-
-openingFacts : List Player -> Facts
-openingFacts players =
-    let
-        allCards =
-            personCards ++ weaponCards ++ roomCards
-
-        reducer =
-            \card facts -> List.foldl (setInitialFacts card) facts players
-    in
-    List.foldl reducer Dict.empty allCards
-
-
 setPlayers : Model -> Int -> ( Model, Cmd Msg )
 setPlayers model playerCount =
     let
         gamePlayers =
             List.take playerCount possiblePlayers
+
+        playerKeys =
+            List.map keyForPlayer gamePlayers
+
+        cardKeys =
+            List.map keyForCard (personCards ++ weaponCards ++ roomCards)
+
+        facts =
+            openingFacts cardKeys playerKeys
     in
-    ( { model | players = gamePlayers, facts = openingFacts gamePlayers }, Cmd.none )
+    ( { model
+        | players = gamePlayers
+        , facts = openingFacts cardKeys playerKeys
+      }
+    , Cmd.none
+    )
 
 
 beginGuess : Model -> Player -> ( Model, Cmd Msg )
@@ -384,7 +371,7 @@ playerHasCard : Model -> Player -> Card -> ( Model, Cmd Msg )
 playerHasCard model player card =
     let
         updatedFacts =
-            Dict.update ( keyForCard card, keyForPlayer player ) (\_ -> Just Holding) model.facts
+            setPlayerHasCard (keyForCard card) (keyForPlayer player) model.facts
 
         nextGameState =
             Investigating (PlayerHand player)
@@ -417,9 +404,9 @@ noCardsToShow model guess player =
 
         updatedFacts =
             model.facts
-                |> Dict.insert ( keyForPerson guess.person, keyForPlayer player ) NotHolding
-                |> Dict.insert ( keyForWeapon guess.weapon, keyForPlayer player ) NotHolding
-                |> Dict.insert ( keyForRoom guess.room, keyForPlayer player ) NotHolding
+                |> setPlayerDoesNotHaveCard (keyForPerson guess.person) (keyForPlayer player)
+                |> setPlayerDoesNotHaveCard (keyForWeapon guess.weapon) (keyForPlayer player)
+                |> setPlayerDoesNotHaveCard (keyForRoom guess.room) (keyForPlayer player)
 
         updatedState =
             if goneAroundTheCircle then
@@ -437,16 +424,6 @@ noCardsToShow model guess player =
     )
 
 
-incrementMaybe : Maybe HoldingStatus -> Maybe HoldingStatus
-incrementMaybe status =
-    case status of
-        Just (MaybeHolding count) ->
-            Just (MaybeHolding (count + 1))
-
-        _ ->
-            status
-
-
 showsSomeCard : Model -> CompleteGuess -> Player -> ( Model, Cmd Msg )
 showsSomeCard model guess player =
     let
@@ -458,9 +435,9 @@ showsSomeCard model guess player =
 
         updatedFacts =
             model.facts
-                |> Dict.update ( keyForPerson guess.person, keyForPlayer player ) incrementMaybe
-                |> Dict.update ( keyForWeapon guess.weapon, keyForPlayer player ) incrementMaybe
-                |> Dict.update ( keyForRoom guess.room, keyForPlayer player ) incrementMaybe
+                |> setPlayerMightHaveCard (keyForPerson guess.person) (keyForPlayer player)
+                |> setPlayerMightHaveCard (keyForWeapon guess.weapon) (keyForPlayer player)
+                |> setPlayerMightHaveCard (keyForRoom guess.room) (keyForPlayer player)
 
         updatedState =
             Investigating (PlayerHand player)
@@ -536,7 +513,7 @@ cardPlayerCell : Facts -> Card -> Player -> Html msg
 cardPlayerCell facts card player =
     let
         holdingStatus =
-            getHoldingStatus facts player card
+            getHoldingStatus facts (keyForCard card) (keyForPlayer player)
     in
     td [] [ text (displayHoldingStatus holdingStatus) ]
 
@@ -703,16 +680,11 @@ displayHoldingStatus holdingStatus =
             "This should be impossible"
 
 
-getHoldingStatus : Facts -> Player -> Card -> Maybe HoldingStatus
-getHoldingStatus facts player card =
-    Dict.get ( keyForCard card, keyForPlayer player ) facts
-
-
 playerCardStatusDescListValue : Facts -> Player -> Card -> List (Html Msg)
 playerCardStatusDescListValue facts player card =
     let
         holdingStatus =
-            getHoldingStatus facts player card
+            getHoldingStatus facts (keyForCard card) (keyForPlayer player)
 
         statusText =
             text (displayHoldingStatus holdingStatus)
