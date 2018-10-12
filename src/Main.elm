@@ -1,7 +1,12 @@
 module Main exposing (main)
 
 import Browser exposing (element)
-import Facts exposing (..)
+import CardPresenter
+import Domain exposing (..)
+import Facts exposing (Facts, HoldingStatus(..))
+import FactsPresenter
+import GameBoard
+import GameState exposing (GameState(..), SubjectOfInvestigation(..))
 import Html exposing (..)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
@@ -9,247 +14,7 @@ import List.Extra exposing (takeWhile, takeWhileRight)
 
 
 
----- DOMAIN ---
-
-
-type alias Player =
-    { name : String
-    }
-
-
-keyForPlayer : Player -> String
-keyForPlayer player =
-    player.name
-
-
-keyForPerson : Person -> String
-keyForPerson person =
-    Debug.toString person
-
-
-keyForWeapon : Weapon -> String
-keyForWeapon weapon =
-    Debug.toString weapon
-
-
-keyForRoom : Room -> String
-keyForRoom room =
-    Debug.toString room
-
-
-keyForCard : Card -> String
-keyForCard card =
-    case card of
-        PersonTag person ->
-            keyForPerson person
-
-        WeaponTag weapon ->
-            keyForWeapon weapon
-
-        RoomTag room ->
-            keyForRoom room
-
-
-createPlayer : String -> Player
-createPlayer name =
-    { name = name
-    }
-
-
-possiblePlayers : List Player
-possiblePlayers =
-    List.map createPlayer [ "P1", "P2", "P3", "P4", "P5", "P6" ]
-
-
-possibleNumbersOfPlayers =
-    [ 3, 4, 5, 6 ]
-
-
-type Person
-    = MrGreen
-    | ProfessorPlum
-    | MissScarlet
-    | ColMustard
-    | MrsWhite
-    | MrsPeacock
-
-
-people : List Person
-people =
-    [ MrGreen, ProfessorPlum, MissScarlet, ColMustard, MrsWhite, MrsPeacock ]
-
-
-personCards : List Card
-personCards =
-    List.map (\person -> PersonTag person) people
-
-
-displayPerson : Person -> String
-displayPerson person =
-    case person of
-        MrGreen ->
-            "Mr. Green"
-
-        ProfessorPlum ->
-            "Professor Plum"
-
-        MissScarlet ->
-            "MissScarlet"
-
-        ColMustard ->
-            "Col. Mustard"
-
-        MrsWhite ->
-            "Mrs. White"
-
-        MrsPeacock ->
-            "Mrs. Peacock"
-
-
-type Weapon
-    = Knife
-    | Rope
-    | Candlestick
-    | Pipe
-    | Revolver
-    | Wrench
-
-
-weapons : List Weapon
-weapons =
-    [ Knife, Rope, Candlestick, Pipe, Revolver, Wrench ]
-
-
-weaponCards : List Card
-weaponCards =
-    List.map (\weapon -> WeaponTag weapon) weapons
-
-
-displayWeapon : Weapon -> String
-displayWeapon weapon =
-    case weapon of
-        Knife ->
-            "Knife"
-
-        Rope ->
-            "Rope"
-
-        Candlestick ->
-            "Candlestick"
-
-        Pipe ->
-            "Pipe"
-
-        Revolver ->
-            "Revolver"
-
-        Wrench ->
-            "Wrench"
-
-
-type Room
-    = Hall
-    | Study
-    | Conservatory
-    | Kitchen
-    | Ballroom
-    | Lounge
-    | Billiards
-    | Library
-    | Dining
-
-
-rooms : List Room
-rooms =
-    [ Hall, Study, Conservatory, Kitchen, Ballroom, Lounge, Billiards, Library, Dining ]
-
-
-roomCards : List Card
-roomCards =
-    List.map (\room -> RoomTag room) rooms
-
-
-displayRoom : Room -> String
-displayRoom room =
-    case room of
-        Hall ->
-            "Hall"
-
-        Study ->
-            "Study"
-
-        Conservatory ->
-            "Conservatory"
-
-        Kitchen ->
-            "Kitchen"
-
-        Ballroom ->
-            "Ballroom"
-
-        Lounge ->
-            "Lounge"
-
-        Billiards ->
-            "Billiards Room"
-
-        Library ->
-            "Library"
-
-        Dining ->
-            "Dining Room"
-
-
-type Card
-    = PersonTag Person
-    | WeaponTag Weapon
-    | RoomTag Room
-
-
-displayCard : Card -> String
-displayCard card =
-    case card of
-        PersonTag person ->
-            displayPerson person
-
-        WeaponTag weapon ->
-            displayWeapon weapon
-
-        RoomTag room ->
-            displayRoom room
-
-
-type alias CompleteGuess =
-    { guesser : Player
-    , person : Person
-    , weapon : Weapon
-    , room : Room
-    , noShows : List Player
-    , shower : Maybe Player
-    }
-
-
-type InProgressGuess
-    = NothingIsSet
-    | PersonIsSet Person
-    | WeaponIsSet Person Weapon
-
-
-
 ---- MODEL ----
-
-
-type SubjectOfInvestigation
-    = PlayerHand Player
-    | People
-    | Weapons
-    | Rooms
-
-
-type GameState
-    = Guessing Player InProgressGuess
-    | Revealing CompleteGuess
-    | Investigating SubjectOfInvestigation
 
 
 type alias Model =
@@ -264,7 +29,7 @@ init : ( Model, Cmd Msg )
 init =
     ( { players = []
       , gameState = Investigating People
-      , facts = initFacts
+      , facts = Facts.initFacts
       , history = []
       }
     , Cmd.none
@@ -294,18 +59,12 @@ setPlayers model playerCount =
         gamePlayers =
             List.take playerCount possiblePlayers
 
-        playerKeys =
-            List.map keyForPlayer gamePlayers
-
-        cardKeys =
-            List.map keyForCard (personCards ++ weaponCards ++ roomCards)
-
-        facts =
-            openingFacts cardKeys playerKeys
+        allCards =
+            personCards ++ weaponCards ++ roomCards
     in
     ( { model
         | players = gamePlayers
-        , facts = openingFacts cardKeys playerKeys
+        , facts = Facts.openingFacts allCards gamePlayers
       }
     , Cmd.none
     )
@@ -371,7 +130,7 @@ playerHasCard : Model -> Player -> Card -> ( Model, Cmd Msg )
 playerHasCard model player card =
     let
         updatedFacts =
-            setPlayerHasCard (keyForCard card) (keyForPlayer player) model.facts
+            Facts.setPlayerHasCard card player model.facts
 
         nextGameState =
             Investigating (PlayerHand player)
@@ -404,9 +163,9 @@ noCardsToShow model guess player =
 
         updatedFacts =
             model.facts
-                |> setPlayerDoesNotHaveCard (keyForPerson guess.person) (keyForPlayer player)
-                |> setPlayerDoesNotHaveCard (keyForWeapon guess.weapon) (keyForPlayer player)
-                |> setPlayerDoesNotHaveCard (keyForRoom guess.room) (keyForPlayer player)
+                |> Facts.setPlayerDoesNotHaveCard (PersonTag guess.person) player
+                |> Facts.setPlayerDoesNotHaveCard (WeaponTag guess.weapon) player
+                |> Facts.setPlayerDoesNotHaveCard (RoomTag guess.room) player
 
         updatedState =
             if goneAroundTheCircle then
@@ -435,9 +194,9 @@ showsSomeCard model guess player =
 
         updatedFacts =
             model.facts
-                |> setPlayerMightHaveCard (keyForPerson guess.person) (keyForPlayer player)
-                |> setPlayerMightHaveCard (keyForWeapon guess.weapon) (keyForPlayer player)
-                |> setPlayerMightHaveCard (keyForRoom guess.room) (keyForPlayer player)
+                |> Facts.setPlayerMightHaveCard (PersonTag guess.person) player
+                |> Facts.setPlayerMightHaveCard (WeaponTag guess.weapon) player
+                |> Facts.setPlayerMightHaveCard (RoomTag guess.room) player
 
         updatedState =
             Investigating (PlayerHand player)
@@ -489,45 +248,6 @@ update msg model =
 ---- VIEW ----
 
 
-blankCell : Html msg
-blankCell =
-    td [] []
-
-
-blankRow : List Player -> Html msg
-blankRow players =
-    tr [] (blankCell :: List.map (\_ -> blankCell) players)
-
-
-headerRow : List Player -> Html Msg
-headerRow players =
-    tr [] (blankCell :: List.map playerColumnHeader players)
-
-
-playerColumnHeader : Player -> Html Msg
-playerColumnHeader player =
-    th [] [ text player.name ]
-
-
-cardPlayerCell : Facts -> Card -> Player -> Html msg
-cardPlayerCell facts card player =
-    let
-        holdingStatus =
-            getHoldingStatus facts (keyForCard card) (keyForPlayer player)
-    in
-    td [] [ text (displayHoldingStatus holdingStatus) ]
-
-
-cardCell : Card -> Html msg
-cardCell card =
-    td [] [ text (displayCard card) ]
-
-
-cardRow : Facts -> List Player -> Card -> Html msg
-cardRow facts players card =
-    tr [] (cardCell card :: List.map (cardPlayerCell facts card) players)
-
-
 title : Html msg
 title =
     h1 [] [ text "Clue!" ]
@@ -561,16 +281,6 @@ setupNewGame model =
             div [] []
 
 
-gameBoard : List Card -> Model -> Html Msg
-gameBoard cards model =
-    div []
-        [ table [ class "table" ]
-            ([ headerRow model.players ]
-                ++ List.map (cardRow model.facts model.players) cards
-            )
-        ]
-
-
 cardOption : Card -> Html Msg
 cardOption card =
     let
@@ -585,7 +295,7 @@ cardOption card =
                 RoomTag room ->
                     SetRoomGuess room
     in
-    a [ class "button", onClick clickHandler ] [ text (displayCard card) ]
+    a [ class "button", onClick clickHandler ] [ text (CardPresenter.displayCard card) ]
 
 
 selectCard : List Card -> Html Msg
@@ -607,11 +317,11 @@ displayGuess : CompleteGuess -> String
 displayGuess guess =
     guess.guesser.name
         ++ " :: "
-        ++ displayPerson guess.person
+        ++ CardPresenter.displayCard (PersonTag guess.person)
         ++ " :: "
-        ++ displayWeapon guess.weapon
+        ++ CardPresenter.displayCard (WeaponTag guess.weapon)
         ++ " :: "
-        ++ displayRoom guess.room
+        ++ CardPresenter.displayCard (RoomTag guess.room)
 
 
 otherPlayers : Player -> List Player -> List Player
@@ -664,30 +374,14 @@ revealingForm model =
             div [] []
 
 
-displayHoldingStatus : Maybe HoldingStatus -> String
-displayHoldingStatus holdingStatus =
-    case holdingStatus of
-        Just NotHolding ->
-            "No"
-
-        Just (MaybeHolding count) ->
-            "Maybe: " ++ String.fromInt count
-
-        Just Holding ->
-            "Yes!"
-
-        _ ->
-            "This should be impossible"
-
-
 playerCardStatusDescListValue : Facts -> Player -> Card -> List (Html Msg)
 playerCardStatusDescListValue facts player card =
     let
         holdingStatus =
-            getHoldingStatus facts (keyForCard card) (keyForPlayer player)
+            Facts.getHoldingStatus facts card player
 
         statusText =
-            text (displayHoldingStatus holdingStatus)
+            text (FactsPresenter.displayHoldingStatus holdingStatus)
     in
     case holdingStatus of
         Just (MaybeHolding count) ->
@@ -701,7 +395,7 @@ playerCardStatusDescListValue facts player card =
 
 playerCardStatusAsDescriptionListEntry : Facts -> Player -> Card -> List (Html Msg)
 playerCardStatusAsDescriptionListEntry facts player card =
-    [ dt [] [ text (displayCard card) ]
+    [ dt [] [ text (CardPresenter.displayCard card) ]
     , dd [] (playerCardStatusDescListValue facts player card)
     ]
 
@@ -728,13 +422,13 @@ investigatingView subject model =
             playerView player model
 
         People ->
-            gameBoard personCards model
+            GameBoard.render personCards model.facts model.players
 
         Weapons ->
-            gameBoard weaponCards model
+            GameBoard.render weaponCards model.facts model.players
 
         Rooms ->
-            gameBoard roomCards model
+            GameBoard.render roomCards model.facts model.players
 
 
 renderMainDisplay : Model -> Html Msg

@@ -10,6 +10,7 @@ module Facts exposing
     )
 
 import Dict exposing (Dict, empty, get, insert, update)
+import Domain exposing (Card(..), Person, Player, Room, Weapon)
 
 
 type HoldingStatus
@@ -27,23 +28,23 @@ initFacts =
     Dict.empty
 
 
-setInitialFacts : String -> String -> Facts -> Facts
-setInitialFacts cardKey playerKey facts =
-    Dict.insert ( cardKey, playerKey ) (MaybeHolding 0) facts
+setInitialFacts : Card -> Player -> Facts -> Facts
+setInitialFacts card player facts =
+    Dict.insert ( keyForCard card, keyForPlayer player ) (MaybeHolding 0) facts
 
 
-openingFacts : List String -> List String -> Facts
-openingFacts cardKeys playerKeys =
+openingFacts : List Card -> List Player -> Facts
+openingFacts cards players =
     let
         reducer =
-            \cardKey facts -> List.foldl (setInitialFacts cardKey) facts playerKeys
+            \card facts -> List.foldl (setInitialFacts card) facts players
     in
-    List.foldl reducer Dict.empty cardKeys
+    List.foldl reducer Dict.empty cards
 
 
-setPlayerMightHaveCard : String -> String -> Facts -> Facts
-setPlayerMightHaveCard cardKey playerKey facts =
-    Dict.update ( cardKey, playerKey ) incrementMaybe facts
+setPlayerMightHaveCard : Card -> Player -> Facts -> Facts
+setPlayerMightHaveCard card player facts =
+    Dict.update ( keyForCard card, keyForPlayer player ) incrementMaybe facts
 
 
 incrementMaybe : Maybe HoldingStatus -> Maybe HoldingStatus
@@ -56,16 +57,49 @@ incrementMaybe status =
             status
 
 
-setPlayerHasCard : String -> String -> Facts -> Facts
-setPlayerHasCard cardKey playerKey facts =
-    Dict.update ( cardKey, playerKey ) (\_ -> Just Holding) facts
+setPlayerHasCard : Card -> Player -> Facts -> Facts
+setPlayerHasCard card player facts =
+    Dict.update ( keyForCard card, keyForPlayer player ) (\_ -> Just Holding) facts
 
 
-setPlayerDoesNotHaveCard : String -> String -> Facts -> Facts
-setPlayerDoesNotHaveCard cardKey playerKey facts =
-    Dict.insert ( cardKey, playerKey ) NotHolding facts
+setPlayerDoesNotHaveCard : Card -> Player -> Facts -> Facts
+setPlayerDoesNotHaveCard card player facts =
+    Dict.insert ( keyForCard card, keyForPlayer player ) NotHolding facts
 
 
-getHoldingStatus : Facts -> String -> String -> Maybe HoldingStatus
-getHoldingStatus facts cardKey playerKey =
-    Dict.get ( cardKey, playerKey ) facts
+getHoldingStatus : Facts -> Card -> Player -> Maybe HoldingStatus
+getHoldingStatus facts card player =
+    Dict.get ( keyForCard card, keyForPlayer player ) facts
+
+
+keyForPlayer : Player -> String
+keyForPlayer player =
+    player.name
+
+
+keyForPerson : Person -> String
+keyForPerson person =
+    Debug.toString person
+
+
+keyForWeapon : Weapon -> String
+keyForWeapon weapon =
+    Debug.toString weapon
+
+
+keyForRoom : Room -> String
+keyForRoom room =
+    Debug.toString room
+
+
+keyForCard : Card -> String
+keyForCard card =
+    case card of
+        PersonTag person ->
+            keyForPerson person
+
+        WeaponTag weapon ->
+            keyForWeapon weapon
+
+        RoomTag room ->
+            keyForRoom room
