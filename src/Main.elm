@@ -282,13 +282,17 @@ title =
     h1 [] [ text "Clue!" ]
 
 
-addPlayerToGame : String -> Html Msg
+addPlayerToGame : String -> List (Html Msg)
 addPlayerToGame nameFragment =
-    div []
-        [ input [ type_ "text", placeholder "Name", value nameFragment, onInput BuildPlayerName ] []
-        , button [ onClick AddPlayer ] [ text "Add player" ]
-        , button [ onClick StartGame ] [ text "Start" ]
-        ]
+    [ input [ type_ "text", placeholder "Name", value nameFragment, onInput BuildPlayerName ] []
+    , button [ onClick AddPlayer ] [ text "Add player" ]
+    , button [ onClick StartGame ] [ text "Start" ]
+    ]
+
+
+listCurrentPlayers : List Player -> List (Html msg)
+listCurrentPlayers players =
+    List.map (\player -> p [] [ text player.name ]) players
 
 
 resetGame : Html Msg
@@ -300,7 +304,11 @@ setupNewGame : Model -> Html Msg
 setupNewGame model =
     case model.gameState of
         Setup nameFragment ->
-            addPlayerToGame nameFragment
+            div []
+                ([]
+                    ++ addPlayerToGame nameFragment
+                    ++ listCurrentPlayers model.players
+                )
 
         _ ->
             div [] []
