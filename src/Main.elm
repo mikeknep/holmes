@@ -8,8 +8,8 @@ import FactsPresenter
 import GameBoard
 import GameState exposing (GameState(..), SubjectOfInvestigation(..))
 import Html exposing (..)
-import Html.Attributes exposing (class)
-import Html.Events exposing (onClick)
+import Html.Attributes exposing (..)
+import Html.Events exposing (onClick, onInput)
 import List.Extra exposing (takeWhile, takeWhileRight)
 
 
@@ -28,7 +28,7 @@ type alias Model =
 init : ( Model, Cmd Msg )
 init =
     ( { players = []
-      , gameState = Setup
+      , gameState = Setup ""
       , facts = Facts.initFacts
       , history = []
       }
@@ -42,6 +42,9 @@ init =
 
 type Msg
     = SetPlayers Int
+    | BuildPlayerName String
+    | AddPlayer
+    | StartGame
     | ResetGame
     | Investigate SubjectOfInvestigation
     | BeginGuess Player
@@ -66,6 +69,40 @@ setPlayers model playerCount =
         | players = gamePlayers
         , facts = Facts.openingFacts allCards gamePlayers
         , gameState = Investigating People
+      }
+    , Cmd.none
+    )
+
+
+buildPlayerName : Model -> String -> ( Model, Cmd Msg )
+buildPlayerName model nameFragment =
+    ( { model
+        | gameState = Setup nameFragment
+      }
+    , Cmd.none
+    )
+
+
+addPlayer : Model -> ( Model, Cmd Msg )
+addPlayer model =
+    case model.gameState of
+        Setup playerName ->
+            ( { model
+                | gameState = Setup ""
+                , players = createPlayer playerName :: model.players
+              }
+            , Cmd.none
+            )
+
+        _ ->
+            ( model, Cmd.none )
+
+
+startGame : Model -> ( Model, Cmd Msg )
+startGame model =
+    ( { model
+        | gameState = Investigating People
+        , facts = Facts.openingFacts allCards model.players
       }
     , Cmd.none
     )
@@ -221,6 +258,15 @@ update msg model =
         SetPlayers playerCount ->
             setPlayers model playerCount
 
+        BuildPlayerName nameFragment ->
+            buildPlayerName model nameFragment
+
+        AddPlayer ->
+            addPlayer model
+
+        StartGame ->
+            startGame model
+
         ResetGame ->
             init
 
@@ -271,6 +317,15 @@ selectNumberOfPlayers =
         )
 
 
+addPlayerToGame : String -> Html Msg
+addPlayerToGame nameFragment =
+    div []
+        [ input [ type_ "text", placeholder "Name", value nameFragment, onInput BuildPlayerName ] []
+        , button [ onClick AddPlayer ] [ text "Add player" ]
+        , button [ onClick StartGame ] [ text "Start" ]
+        ]
+
+
 resetGame : Html Msg
 resetGame =
     button [ onClick ResetGame ] [ text "Reset" ]
@@ -279,8 +334,8 @@ resetGame =
 setupNewGame : Model -> Html Msg
 setupNewGame model =
     case model.gameState of
-        Setup ->
-            selectNumberOfPlayers
+        Setup nameFragment ->
+            addPlayerToGame nameFragment
 
         _ ->
             div [] []
@@ -448,14 +503,14 @@ renderMainDisplay model =
         Revealing _ ->
             revealingForm model
 
-        Setup ->
+        Setup _ ->
             div [] []
 
 
 mainDisplay : Model -> Html Msg
 mainDisplay model =
     case model.gameState of
-        Setup ->
+        Setup _ ->
             div [] []
 
         _ ->
@@ -470,7 +525,7 @@ investigatePlayerButton player =
 playerSelect : Model -> Html Msg
 playerSelect model =
     case model.gameState of
-        Setup ->
+        Setup _ ->
             div [] []
 
         _ ->
@@ -485,7 +540,7 @@ investigateCardTypeButton cardType =
 cardTypeSelect : Model -> Html Msg
 cardTypeSelect model =
     case model.gameState of
-        Setup ->
+        Setup _ ->
             div [] []
 
         _ ->

@@ -11,7 +11,7 @@ type SubjectOfInvestigation
 
 
 type GameState
-    = Setup
+    = Setup String
     | Guessing Player InProgressGuess
     | Revealing CompleteGuess
     | Investigating SubjectOfInvestigation

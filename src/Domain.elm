@@ -6,6 +6,8 @@ module Domain exposing
     , Player
     , Room(..)
     , Weapon(..)
+    , allCards
+    , createPlayer
     , personCards
     , possibleNumbersOfPlayers
     , possiblePlayers
@@ -114,3 +116,7 @@ rooms =
 roomCards : List Card
 roomCards =
     List.map (\room -> RoomTag room) rooms
+
+
+allCards =
+    personCards ++ weaponCards ++ roomCards
