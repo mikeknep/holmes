@@ -11,7 +11,7 @@ module Facts exposing
     )
 
 import Dict exposing (Dict, empty, get, insert, update)
-import Domain exposing (Card(..), CompleteGuess, Person, Player, Room, Weapon)
+import Domain exposing (Card(..), CompleteGuess, Person, Player, PlayerId, Room, Weapon)
 
 
 type HoldingStatus
@@ -21,7 +21,7 @@ type HoldingStatus
 
 
 type alias Facts =
-    Dict ( String, String ) HoldingStatus
+    Dict ( String, PlayerId ) HoldingStatus
 
 
 initFacts : Facts
@@ -86,9 +86,9 @@ getHoldingStatus facts card player =
     Dict.get ( keyForCard card, keyForPlayer player ) facts
 
 
-keyForPlayer : Player -> String
+keyForPlayer : Player -> PlayerId
 keyForPlayer player =
-    player.name
+    player.id
 
 
 keyForPerson : Person -> String

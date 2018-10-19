@@ -4,6 +4,7 @@ module Domain exposing
     , InProgressGuess(..)
     , Person(..)
     , Player
+    , PlayerId
     , Room(..)
     , Weapon(..)
     , allCards
