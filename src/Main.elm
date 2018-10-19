@@ -41,8 +41,7 @@ init =
 
 
 type Msg
-    = SetPlayers Int
-    | BuildPlayerName String
+    = BuildPlayerName String
     | AddPlayer
     | StartGame
     | ResetGame
@@ -54,24 +53,6 @@ type Msg
     | PlayerHasCard Player Card
     | NoCardsToShow CompleteGuess Player
     | ShowsSomeCard CompleteGuess Player
-
-
-setPlayers : Model -> Int -> ( Model, Cmd Msg )
-setPlayers model playerCount =
-    let
-        gamePlayers =
-            List.take playerCount possiblePlayers
-
-        allCards =
-            personCards ++ weaponCards ++ roomCards
-    in
-    ( { model
-        | players = gamePlayers
-        , facts = Facts.openingFacts allCards gamePlayers
-        , gameState = Investigating People
-      }
-    , Cmd.none
-    )
 
 
 buildPlayerName : Model -> String -> ( Model, Cmd Msg )
@@ -255,9 +236,6 @@ showsSomeCard model guess player =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        SetPlayers playerCount ->
-            setPlayers model playerCount
-
         BuildPlayerName nameFragment ->
             buildPlayerName model nameFragment
 
@@ -302,19 +280,6 @@ update msg model =
 title : Html msg
 title =
     h1 [] [ text "Clue!" ]
-
-
-playerCountButton : Int -> Html Msg
-playerCountButton numberOfPlayers =
-    button [ onClick (SetPlayers numberOfPlayers) ] [ text (String.fromInt numberOfPlayers) ]
-
-
-selectNumberOfPlayers : Html Msg
-selectNumberOfPlayers =
-    div []
-        (h3 [] [ text "Select number of players" ]
-            :: List.map playerCountButton possibleNumbersOfPlayers
-        )
 
 
 addPlayerToGame : String -> Html Msg

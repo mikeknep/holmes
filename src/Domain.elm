@@ -9,8 +9,6 @@ module Domain exposing
     , allCards
     , createPlayer
     , personCards
-    , possibleNumbersOfPlayers
-    , possiblePlayers
     , roomCards
     , weaponCards
     )
@@ -35,15 +33,6 @@ type InProgressGuess
 type alias Player =
     { name : String
     }
-
-
-possiblePlayers : List Player
-possiblePlayers =
-    List.map createPlayer [ "P1", "P2", "P3", "P4", "P5", "P6" ]
-
-
-possibleNumbersOfPlayers =
-    [ 3, 4, 5, 6 ]
 
 
 createPlayer : String -> Player
