@@ -482,12 +482,7 @@ renderMainDisplay model =
 
 mainDisplay : Model -> Html Msg
 mainDisplay model =
-    case model.gameState of
-        Setup _ ->
-            div [] []
-
-        _ ->
-            renderMainDisplay model
+    renderMainDisplay model
 
 
 investigatePlayerButton : Player -> Html Msg
@@ -497,12 +492,7 @@ investigatePlayerButton player =
 
 playerSelect : Model -> Html Msg
 playerSelect model =
-    case model.gameState of
-        Setup _ ->
-            div [] []
-
-        _ ->
-            div [] (List.map investigatePlayerButton model.players)
+    div [] (List.map investigatePlayerButton model.players)
 
 
 investigateCardTypeButton : SubjectOfInvestigation -> Html Msg
@@ -512,12 +502,21 @@ investigateCardTypeButton cardType =
 
 cardTypeSelect : Model -> Html Msg
 cardTypeSelect model =
+    div [] (List.map investigateCardTypeButton [ People, Weapons, Rooms ])
+
+
+activeGame : Model -> Html Msg
+activeGame model =
     case model.gameState of
         Setup _ ->
             div [] []
 
         _ ->
-            div [] (List.map investigateCardTypeButton [ People, Weapons, Rooms ])
+            div []
+                [ playerSelect model
+                , cardTypeSelect model
+                , mainDisplay model
+                ]
 
 
 view : Model -> Html Msg
@@ -525,9 +524,7 @@ view model =
     div [ class "container" ]
         [ title
         , setupNewGame model
-        , playerSelect model
-        , cardTypeSelect model
-        , mainDisplay model
+        , activeGame model
         , resetGame
         ]
 
