@@ -30,14 +30,20 @@ type InProgressGuess
     | WeaponIsSet Person Weapon
 
 
+type alias PlayerId =
+    Int
+
+
 type alias Player =
-    { name : String
+    { id : PlayerId
+    , name : String
     }
 
 
-createPlayer : String -> Player
-createPlayer name =
-    { name = name
+createPlayer : PlayerId -> String -> Player
+createPlayer playerId name =
+    { id = playerId
+    , name = name
     }
 
 

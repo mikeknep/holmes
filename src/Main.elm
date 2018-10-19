@@ -68,9 +68,13 @@ addPlayer : Model -> ( Model, Cmd Msg )
 addPlayer model =
     case model.gameState of
         Setup playerName ->
+            let
+                playerId =
+                    List.length model.players
+            in
             ( { model
                 | gameState = Setup ""
-                , players = createPlayer playerName :: model.players
+                , players = createPlayer playerId playerName :: model.players
               }
             , Cmd.none
             )
