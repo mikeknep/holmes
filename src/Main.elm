@@ -28,7 +28,7 @@ type alias Model =
 init : ( Model, Cmd Msg )
 init =
     ( { players = []
-      , gameState = Investigating People
+      , gameState = Setup
       , facts = Facts.initFacts
       , history = []
       }
@@ -65,6 +65,7 @@ setPlayers model playerCount =
     ( { model
         | players = gamePlayers
         , facts = Facts.openingFacts allCards gamePlayers
+        , gameState = Investigating People
       }
     , Cmd.none
     )
@@ -277,8 +278,8 @@ resetGame =
 
 setupNewGame : Model -> Html Msg
 setupNewGame model =
-    case model.players of
-        [] ->
+    case model.gameState of
+        Setup ->
             selectNumberOfPlayers
 
         _ ->
@@ -447,11 +448,14 @@ renderMainDisplay model =
         Revealing _ ->
             revealingForm model
 
+        Setup ->
+            div [] []
+
 
 mainDisplay : Model -> Html Msg
 mainDisplay model =
-    case model.players of
-        [] ->
+    case model.gameState of
+        Setup ->
             div [] []
 
         _ ->
@@ -465,7 +469,12 @@ investigatePlayerButton player =
 
 playerSelect : Model -> Html Msg
 playerSelect model =
-    div [] (List.map investigatePlayerButton model.players)
+    case model.gameState of
+        Setup ->
+            div [] []
+
+        _ ->
+            div [] (List.map investigatePlayerButton model.players)
 
 
 investigateCardTypeButton : SubjectOfInvestigation -> Html Msg
@@ -475,7 +484,12 @@ investigateCardTypeButton cardType =
 
 cardTypeSelect : Model -> Html Msg
 cardTypeSelect model =
-    div [] (List.map investigateCardTypeButton [ People, Weapons, Rooms ])
+    case model.gameState of
+        Setup ->
+            div [] []
+
+        _ ->
+            div [] (List.map investigateCardTypeButton [ People, Weapons, Rooms ])
 
 
 view : Model -> Html Msg

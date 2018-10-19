@@ -11,6 +11,7 @@ type SubjectOfInvestigation
 
 
 type GameState
-    = Guessing Player InProgressGuess
+    = Setup
+    | Guessing Player InProgressGuess
     | Revealing CompleteGuess
     | Investigating SubjectOfInvestigation
