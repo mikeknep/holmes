@@ -11,7 +11,7 @@ module Facts exposing
     )
 
 import Dict exposing (Dict, empty, get, insert, update)
-import Domain exposing (Card(..), CompleteGuess, Person, Player, PlayerId, Room, Weapon)
+import Domain exposing (Card(..), CompleteGuess, Person, PlayerId, Room, Weapon)
 
 
 type HoldingStatus
@@ -29,12 +29,12 @@ initFacts =
     Dict.empty
 
 
-setInitialFacts : Card -> Player -> Facts -> Facts
-setInitialFacts card player facts =
-    Dict.insert ( keyForCard card, keyForPlayer player ) (MaybeHolding 0) facts
+setInitialFacts : Card -> PlayerId -> Facts -> Facts
+setInitialFacts card playerId facts =
+    Dict.insert ( keyForCard card, playerId ) (MaybeHolding 0) facts
 
 
-openingFacts : List Card -> List Player -> Facts
+openingFacts : List Card -> List PlayerId -> Facts
 openingFacts cards players =
     let
         reducer =
@@ -56,9 +56,9 @@ analyze history facts =
         analyze history newFacts
 
 
-setPlayerMightHaveCard : Card -> Player -> Facts -> Facts
-setPlayerMightHaveCard card player facts =
-    Dict.update ( keyForCard card, keyForPlayer player ) incrementMaybe facts
+setPlayerMightHaveCard : Card -> PlayerId -> Facts -> Facts
+setPlayerMightHaveCard card playerId facts =
+    Dict.update ( keyForCard card, playerId ) incrementMaybe facts
 
 
 incrementMaybe : Maybe HoldingStatus -> Maybe HoldingStatus
@@ -71,24 +71,19 @@ incrementMaybe status =
             status
 
 
-setPlayerHasCard : Card -> Player -> Facts -> Facts
-setPlayerHasCard card player facts =
-    Dict.update ( keyForCard card, keyForPlayer player ) (\_ -> Just Holding) facts
+setPlayerHasCard : Card -> PlayerId -> Facts -> Facts
+setPlayerHasCard card playerId facts =
+    Dict.update ( keyForCard card, playerId ) (\_ -> Just Holding) facts
 
 
-setPlayerDoesNotHaveCard : Card -> Player -> Facts -> Facts
-setPlayerDoesNotHaveCard card player facts =
-    Dict.insert ( keyForCard card, keyForPlayer player ) NotHolding facts
+setPlayerDoesNotHaveCard : Card -> PlayerId -> Facts -> Facts
+setPlayerDoesNotHaveCard card playerId facts =
+    Dict.insert ( keyForCard card, playerId ) NotHolding facts
 
 
-getHoldingStatus : Facts -> Card -> Player -> Maybe HoldingStatus
-getHoldingStatus facts card player =
-    Dict.get ( keyForCard card, keyForPlayer player ) facts
-
-
-keyForPlayer : Player -> PlayerId
-keyForPlayer player =
-    player.id
+getHoldingStatus : Facts -> Card -> PlayerId -> Maybe HoldingStatus
+getHoldingStatus facts card playerId =
+    Dict.get ( keyForCard card, playerId ) facts
 
 
 keyForPerson : Person -> String

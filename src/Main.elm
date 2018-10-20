@@ -2,6 +2,7 @@ module Main exposing (main)
 
 import Browser exposing (element)
 import CardPresenter
+import Dict exposing (..)
 import Domain exposing (..)
 import Facts exposing (Facts, HoldingStatus(..))
 import FactsPresenter
@@ -18,7 +19,7 @@ import List.Extra exposing (takeWhile, takeWhileRight)
 
 
 type alias Model =
-    { players : List Player
+    { players : Dict PlayerId Player
     , gameState : GameState
     , facts : Facts
     , history : List CompleteGuess
@@ -27,7 +28,7 @@ type alias Model =
 
 init : ( Model, Cmd Msg )
 init =
-    ( { players = []
+    ( { players = Dict.empty
       , gameState = Setup ""
       , facts = Facts.initFacts
       , history = []
@@ -46,13 +47,13 @@ type Msg
     | StartGame
     | ResetGame
     | Investigate SubjectOfInvestigation
-    | BeginGuess Player
+    | BeginGuess PlayerId
     | SetPersonGuess Person
     | SetWeaponGuess Weapon
     | SetRoomGuess Room
-    | PlayerHasCard Player Card
-    | NoCardsToShow CompleteGuess Player
-    | ShowsSomeCard CompleteGuess Player
+    | PlayerHasCard PlayerId Card
+    | NoCardsToShow CompleteGuess PlayerId
+    | ShowsSomeCard CompleteGuess PlayerId
 
 
 buildPlayerName : Model -> String -> ( Model, Cmd Msg )
@@ -70,11 +71,11 @@ addPlayer model =
         Setup playerName ->
             let
                 playerId =
-                    List.length model.players
+                    Dict.size model.players
             in
             ( { model
                 | gameState = Setup ""
-                , players = createPlayer playerId playerName :: model.players
+                , players = Dict.insert playerId (createPlayer playerId playerName) model.players
               }
             , Cmd.none
             )
@@ -87,18 +88,17 @@ startGame : Model -> ( Model, Cmd Msg )
 startGame model =
     ( { model
         | gameState = Investigating People
-        , facts = Facts.openingFacts allCards model.players
-        , players = List.reverse model.players
+        , facts = Facts.openingFacts allCards (Dict.keys model.players)
       }
     , Cmd.none
     )
 
 
-beginGuess : Model -> Player -> ( Model, Cmd Msg )
-beginGuess model player =
+beginGuess : Model -> PlayerId -> ( Model, Cmd Msg )
+beginGuess model playerId =
     case model.gameState of
         Investigating p ->
-            ( { model | gameState = Guessing player NothingIsSet }, Cmd.none )
+            ( { model | gameState = Guessing playerId NothingIsSet }, Cmd.none )
 
         _ ->
             ( model, Cmd.none )
@@ -124,7 +124,7 @@ setWeaponGuess model weapon =
             ( model, Cmd.none )
 
 
-buildCompleteGuess : Player -> Person -> Weapon -> Room -> CompleteGuess
+buildCompleteGuess : PlayerId -> Person -> Weapon -> Room -> CompleteGuess
 buildCompleteGuess guesser person weapon room =
     { guesser = guesser
     , person = person
@@ -150,35 +150,35 @@ investigate model subject =
     ( { model | gameState = Investigating subject }, Cmd.none )
 
 
-playerHasCard : Model -> Player -> Card -> ( Model, Cmd Msg )
-playerHasCard model player card =
+playerHasCard : Model -> PlayerId -> Card -> ( Model, Cmd Msg )
+playerHasCard model playerId card =
     let
         updatedFacts =
             model.facts
-                |> Facts.setPlayerHasCard card player
+                |> Facts.setPlayerHasCard card playerId
                 |> Facts.analyze model.history
 
         nextGameState =
-            Investigating (PlayerHand player)
+            Investigating (PlayerHand playerId)
     in
     ( { model | gameState = nextGameState, facts = updatedFacts }
     , Cmd.none
     )
 
 
-allOtherPlayersHaveShownNoCards : CompleteGuess -> List Player -> Bool
+allOtherPlayersHaveShownNoCards : CompleteGuess -> List PlayerId -> Bool
 allOtherPlayersHaveShownNoCards guess players =
     List.length guess.noShows == List.length players - 1
 
 
-noCardsToShow : Model -> CompleteGuess -> Player -> ( Model, Cmd Msg )
-noCardsToShow model guess player =
+noCardsToShow : Model -> CompleteGuess -> PlayerId -> ( Model, Cmd Msg )
+noCardsToShow model guess playerId =
     let
         updatedGuess =
-            { guess | noShows = player :: guess.noShows }
+            { guess | noShows = playerId :: guess.noShows }
 
         goneAroundTheCircle =
-            allOtherPlayersHaveShownNoCards updatedGuess model.players
+            allOtherPlayersHaveShownNoCards updatedGuess (Dict.keys model.players)
 
         updatedHistory =
             if goneAroundTheCircle then
@@ -189,9 +189,9 @@ noCardsToShow model guess player =
 
         updatedFacts =
             model.facts
-                |> Facts.setPlayerDoesNotHaveCard (PersonTag guess.person) player
-                |> Facts.setPlayerDoesNotHaveCard (WeaponTag guess.weapon) player
-                |> Facts.setPlayerDoesNotHaveCard (RoomTag guess.room) player
+                |> Facts.setPlayerDoesNotHaveCard (PersonTag guess.person) playerId
+                |> Facts.setPlayerDoesNotHaveCard (WeaponTag guess.weapon) playerId
+                |> Facts.setPlayerDoesNotHaveCard (RoomTag guess.room) playerId
                 |> Facts.analyze updatedHistory
 
         updatedState =
@@ -210,24 +210,24 @@ noCardsToShow model guess player =
     )
 
 
-showsSomeCard : Model -> CompleteGuess -> Player -> ( Model, Cmd Msg )
-showsSomeCard model guess player =
+showsSomeCard : Model -> CompleteGuess -> PlayerId -> ( Model, Cmd Msg )
+showsSomeCard model guess playerId =
     let
         updatedGuess =
-            { guess | shower = Just player }
+            { guess | shower = Just playerId }
 
         updatedHistory =
             updatedGuess :: model.history
 
         updatedFacts =
             model.facts
-                |> Facts.setPlayerMightHaveCard (PersonTag guess.person) player
-                |> Facts.setPlayerMightHaveCard (WeaponTag guess.weapon) player
-                |> Facts.setPlayerMightHaveCard (RoomTag guess.room) player
+                |> Facts.setPlayerMightHaveCard (PersonTag guess.person) playerId
+                |> Facts.setPlayerMightHaveCard (WeaponTag guess.weapon) playerId
+                |> Facts.setPlayerMightHaveCard (RoomTag guess.room) playerId
                 |> Facts.analyze updatedHistory
 
         updatedState =
-            Investigating (PlayerHand player)
+            Investigating (PlayerHand playerId)
     in
     ( { model
         | gameState = updatedState
@@ -256,8 +256,8 @@ update msg model =
         Investigate subject ->
             investigate model subject
 
-        BeginGuess player ->
-            beginGuess model player
+        BeginGuess playerId ->
+            beginGuess model playerId
 
         SetPersonGuess person ->
             setPersonGuess model person
@@ -268,14 +268,14 @@ update msg model =
         SetRoomGuess room ->
             setRoomGuess model room
 
-        PlayerHasCard player card ->
-            playerHasCard model player card
+        PlayerHasCard playerId card ->
+            playerHasCard model playerId card
 
-        NoCardsToShow guess player ->
-            noCardsToShow model guess player
+        NoCardsToShow guess playerId ->
+            noCardsToShow model guess playerId
 
-        ShowsSomeCard guess player ->
-            showsSomeCard model guess player
+        ShowsSomeCard guess playerId ->
+            showsSomeCard model guess playerId
 
 
 
@@ -295,8 +295,8 @@ addPlayerToGame nameFragment =
     ]
 
 
-listCurrentPlayers : List Player -> List (Html msg)
-listCurrentPlayers players =
+listAddedPlayerNames : List Player -> List (Html msg)
+listAddedPlayerNames players =
     List.map (\player -> p [] [ text player.name ]) players
 
 
@@ -312,7 +312,7 @@ setupNewGame model =
             div []
                 ([]
                     ++ addPlayerToGame nameFragment
-                    ++ listCurrentPlayers model.players
+                    ++ listAddedPlayerNames (Dict.values model.players)
                 )
 
         _ ->
@@ -341,40 +341,38 @@ selectCard cards =
     div [] (List.map cardOption cards)
 
 
-showerOptionButtons : CompleteGuess -> Player -> List (Html Msg)
-showerOptionButtons guess player =
-    if List.member player guess.noShows then
+showerOptionButtons : CompleteGuess -> PlayerId -> List (Html Msg)
+showerOptionButtons guess playerId =
+    if List.member playerId guess.noShows then
         []
 
     else
-        [ button [ class "button", onClick (ShowsSomeCard guess player) ] [ text "yes" ]
-        , button [ class "button", onClick (NoCardsToShow guess player) ] [ text "no" ]
+        [ button [ class "button", onClick (ShowsSomeCard guess playerId) ] [ text "yes" ]
+        , button [ class "button", onClick (NoCardsToShow guess playerId) ] [ text "no" ]
         ]
 
 
 showerOption : CompleteGuess -> Player -> List (Html Msg)
 showerOption guess player =
     [ dt [] [ text player.name ]
-    , dd [] (showerOptionButtons guess player)
+    , dd [] (showerOptionButtons guess player.id)
     ]
 
 
 displayGuess : CompleteGuess -> String
 displayGuess guess =
-    guess.guesser.name
-        ++ " :: "
-        ++ CardPresenter.displayCard (PersonTag guess.person)
+    CardPresenter.displayCard (PersonTag guess.person)
         ++ " :: "
         ++ CardPresenter.displayCard (WeaponTag guess.weapon)
         ++ " :: "
         ++ CardPresenter.displayCard (RoomTag guess.room)
 
 
-otherPlayers : Player -> List Player -> List Player
-otherPlayers guesser allPlayers =
+otherPlayers : PlayerId -> List Player -> List Player
+otherPlayers guesserId allPlayers =
     let
         isNotGuesser =
-            \player -> player /= guesser
+            \player -> player.id /= guesserId
     in
     takeWhileRight isNotGuesser allPlayers ++ takeWhile isNotGuesser allPlayers
 
@@ -414,17 +412,17 @@ revealingForm : Model -> Html Msg
 revealingForm model =
     case model.gameState of
         Revealing guess ->
-            renderShowerOptions guess model.players
+            renderShowerOptions guess (Dict.values model.players)
 
         _ ->
             div [] []
 
 
-playerCardStatusDescListValue : Facts -> Player -> Card -> List (Html Msg)
-playerCardStatusDescListValue facts player card =
+playerCardStatusDescListValue : Facts -> PlayerId -> Card -> List (Html Msg)
+playerCardStatusDescListValue facts playerId card =
     let
         holdingStatus =
-            Facts.getHoldingStatus facts card player
+            Facts.getHoldingStatus facts card playerId
 
         statusText =
             text (FactsPresenter.displayHoldingStatus holdingStatus)
@@ -432,29 +430,36 @@ playerCardStatusDescListValue facts player card =
     case holdingStatus of
         Just (MaybeHolding count) ->
             [ statusText
-            , button [ onClick (PlayerHasCard player card) ] [ text "reveal" ]
+            , button [ onClick (PlayerHasCard playerId card) ] [ text "reveal" ]
             ]
 
         _ ->
             [ statusText ]
 
 
-playerCardStatusAsDescriptionListEntry : Facts -> Player -> Card -> List (Html Msg)
-playerCardStatusAsDescriptionListEntry facts player card =
+playerCardStatusAsDescriptionListEntry : Facts -> PlayerId -> Card -> List (Html Msg)
+playerCardStatusAsDescriptionListEntry facts playerId card =
     [ dt [] [ text (CardPresenter.displayCard card) ]
-    , dd [] (playerCardStatusDescListValue facts player card)
+    , dd [] (playerCardStatusDescListValue facts playerId card)
     ]
 
 
-playerView : Player -> Model -> Html Msg
-playerView player model =
+getPlayerName : PlayerId -> Dict PlayerId Player -> String
+getPlayerName playerId players =
+    Dict.get playerId players
+        |> Maybe.map .name
+        |> Maybe.withDefault "???"
+
+
+playerView : PlayerId -> Model -> Html Msg
+playerView playerId model =
     let
         playerCardStatusAsDL =
-            playerCardStatusAsDescriptionListEntry model.facts player
+            playerCardStatusAsDescriptionListEntry model.facts playerId
     in
     div []
-        [ h1 [] [ text player.name ]
-        , p [] [ a [ class "button", onClick (BeginGuess player) ] [ text "Begin guess" ] ]
+        [ h1 [] [ text (getPlayerName playerId model.players) ]
+        , p [] [ a [ class "button", onClick (BeginGuess playerId) ] [ text "Begin guess" ] ]
         , dl [] (List.concatMap playerCardStatusAsDL personCards)
         , dl [] (List.concatMap playerCardStatusAsDL weaponCards)
         , dl [] (List.concatMap playerCardStatusAsDL roomCards)
@@ -464,8 +469,8 @@ playerView player model =
 investigatingView : SubjectOfInvestigation -> Model -> Html Msg
 investigatingView subject model =
     case subject of
-        PlayerHand player ->
-            playerView player model
+        PlayerHand playerId ->
+            playerView playerId model
 
         People ->
             GameBoard.render personCards model.facts model.players
@@ -500,12 +505,12 @@ mainDisplay model =
 
 investigatePlayerButton : Player -> Html Msg
 investigatePlayerButton player =
-    a [ class "button", onClick (Investigate (PlayerHand player)) ] [ text player.name ]
+    a [ class "button", onClick (Investigate (PlayerHand player.id)) ] [ text player.name ]
 
 
 playerSelect : Model -> Html Msg
 playerSelect model =
-    div [] (List.map investigatePlayerButton model.players)
+    div [] (List.map investigatePlayerButton (Dict.values model.players))
 
 
 investigateCardTypeButton : SubjectOfInvestigation -> Html Msg

@@ -1,6 +1,7 @@
 module GameBoard exposing (render)
 
 import CardPresenter
+import Dict exposing (..)
 import Domain exposing (..)
 import Facts exposing (Facts, HoldingStatus(..))
 import FactsPresenter
@@ -8,12 +9,12 @@ import Html exposing (..)
 import Html.Attributes exposing (class)
 
 
-render : List Card -> Facts -> List Player -> Html msg
+render : List Card -> Facts -> Dict PlayerId Player -> Html msg
 render cards facts players =
     div []
         [ table [ class "table" ]
-            ([ headerRow players ]
-                ++ List.map (cardRow facts players) cards
+            ([ headerRow (Dict.values players) ]
+                ++ List.map (cardRow facts (Dict.keys players)) cards
             )
         ]
 
@@ -38,11 +39,11 @@ playerColumnHeader player =
     th [] [ text player.name ]
 
 
-cardPlayerCell : Facts -> Card -> Player -> Html msg
-cardPlayerCell facts card player =
+cardPlayerCell : Facts -> Card -> PlayerId -> Html msg
+cardPlayerCell facts card playerId =
     let
         holdingStatus =
-            Facts.getHoldingStatus facts card player
+            Facts.getHoldingStatus facts card playerId
     in
     td [] [ text (FactsPresenter.displayHoldingStatus holdingStatus) ]
 
@@ -52,6 +53,6 @@ cardCell card =
     td [] [ text (CardPresenter.displayCard card) ]
 
 
-cardRow : Facts -> List Player -> Card -> Html msg
-cardRow facts players card =
-    tr [] (cardCell card :: List.map (cardPlayerCell facts card) players)
+cardRow : Facts -> List PlayerId -> Card -> Html msg
+cardRow facts playerIds card =
+    tr [] (cardCell card :: List.map (cardPlayerCell facts card) playerIds)

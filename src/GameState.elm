@@ -1,10 +1,10 @@
 module GameState exposing (GameState(..), SubjectOfInvestigation(..))
 
-import Domain exposing (CompleteGuess, InProgressGuess, Player)
+import Domain exposing (CompleteGuess, InProgressGuess, PlayerId)
 
 
 type SubjectOfInvestigation
-    = PlayerHand Player
+    = PlayerHand PlayerId
     | People
     | Weapons
     | Rooms
@@ -12,6 +12,6 @@ type SubjectOfInvestigation
 
 type GameState
     = Setup String
-    | Guessing Player InProgressGuess
+    | Guessing PlayerId InProgressGuess
     | Revealing CompleteGuess
     | Investigating SubjectOfInvestigation

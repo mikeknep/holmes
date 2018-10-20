@@ -16,12 +16,12 @@ module Domain exposing
 
 
 type alias CompleteGuess =
-    { guesser : Player
+    { guesser : PlayerId
     , person : Person
     , weapon : Weapon
     , room : Room
-    , noShows : List Player
-    , shower : Maybe Player
+    , noShows : List PlayerId
+    , shower : Maybe PlayerId
     }
 
 
