@@ -341,13 +341,21 @@ selectCard cards =
     div [] (List.map cardOption cards)
 
 
+showerOptionButtons : CompleteGuess -> Player -> List (Html Msg)
+showerOptionButtons guess player =
+    if List.member player guess.noShows then
+        []
+
+    else
+        [ button [ class "button", onClick (ShowsSomeCard guess player) ] [ text "yes" ]
+        , button [ class "button", onClick (NoCardsToShow guess player) ] [ text "no" ]
+        ]
+
+
 showerOption : CompleteGuess -> Player -> List (Html Msg)
 showerOption guess player =
     [ dt [] [ text player.name ]
-    , dd []
-        [ button [ onClick (ShowsSomeCard guess player) ] [ text "yes" ]
-        , button [ onClick (NoCardsToShow guess player) ] [ text "no" ]
-        ]
+    , dd [] (showerOptionButtons guess player)
     ]
 
 
