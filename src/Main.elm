@@ -88,6 +88,7 @@ startGame model =
     ( { model
         | gameState = Investigating People
         , facts = Facts.openingFacts allCards model.players
+        , players = List.reverse model.players
       }
     , Cmd.none
     )
