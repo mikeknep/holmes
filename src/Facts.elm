@@ -43,8 +43,8 @@ openingFacts cards players =
     List.foldl reducer Dict.empty cards
 
 
-analyze : List CompleteGuess -> Facts -> Facts
-analyze history facts =
+analyze : Int -> List CompleteGuess -> Facts -> Facts
+analyze playerCount history facts =
     let
         newFacts =
             facts
@@ -53,7 +53,7 @@ analyze history facts =
         newFacts
 
     else
-        analyze history newFacts
+        analyze playerCount history newFacts
 
 
 setPlayerMightHaveCard : Card -> PlayerId -> Facts -> Facts
