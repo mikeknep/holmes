@@ -45,7 +45,6 @@ type Msg
     = BuildPlayerName String
     | AddPlayer
     | StartGame
-    | ResetGame
     | Investigate SubjectOfInvestigation
     | BeginGuess PlayerId
     | SetPersonGuess Person
@@ -250,9 +249,6 @@ update msg model =
         StartGame ->
             startGame model
 
-        ResetGame ->
-            init
-
         Investigate subject ->
             investigate model subject
 
@@ -298,11 +294,6 @@ addPlayerToGame nameFragment =
 listAddedPlayerNames : List Player -> List (Html msg)
 listAddedPlayerNames players =
     List.map (\player -> p [] [ text player.name ]) players
-
-
-resetGame : Html Msg
-resetGame =
-    button [ onClick ResetGame ] [ text "Reset" ]
 
 
 setupNewGame : Model -> Html Msg
@@ -543,7 +534,6 @@ view model =
         [ title
         , setupNewGame model
         , activeGame model
-        , resetGame
         ]
 
 
