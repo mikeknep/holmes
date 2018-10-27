@@ -155,7 +155,7 @@ playerHasCard model playerId card =
         updatedFacts =
             model.facts
                 |> Facts.setPlayerHasCard card playerId
-                |> Facts.analyze (Dict.size model.players) model.history
+                |> Facts.analyze (Dict.keys model.players) model.history
 
         nextGameState =
             Investigating (PlayerHand playerId)
@@ -191,7 +191,7 @@ noCardsToShow model guess playerId =
                 |> Facts.setPlayerDoesNotHaveCard (PersonTag guess.person) playerId
                 |> Facts.setPlayerDoesNotHaveCard (WeaponTag guess.weapon) playerId
                 |> Facts.setPlayerDoesNotHaveCard (RoomTag guess.room) playerId
-                |> Facts.analyze (Dict.size model.players) updatedHistory
+                |> Facts.analyze (Dict.keys model.players) updatedHistory
 
         updatedState =
             if goneAroundTheCircle then
@@ -223,7 +223,7 @@ showsSomeCard model guess playerId =
                 |> Facts.setPlayerMightHaveCard (PersonTag guess.person) playerId
                 |> Facts.setPlayerMightHaveCard (WeaponTag guess.weapon) playerId
                 |> Facts.setPlayerMightHaveCard (RoomTag guess.room) playerId
-                |> Facts.analyze (Dict.size model.players) updatedHistory
+                |> Facts.analyze (Dict.keys model.players) updatedHistory
 
         updatedState =
             Investigating (PlayerHand playerId)

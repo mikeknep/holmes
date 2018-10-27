@@ -11,7 +11,8 @@ module Facts exposing
     )
 
 import Dict exposing (Dict, empty, get, insert, update)
-import Domain exposing (Card(..), CompleteGuess, Person, PlayerId, Room, Weapon)
+import DictHelper exposing (..)
+import Domain exposing (Card(..), CompleteGuess, Person, PlayerId, Room, Weapon, allCards)
 
 
 type HoldingStatus
@@ -43,17 +44,130 @@ openingFacts cards players =
     List.foldl reducer Dict.empty cards
 
 
-analyze : Int -> List CompleteGuess -> Facts -> Facts
-analyze playerCount history facts =
+noPlayerCanHoldACardSomeoneElseIsHolding : Card -> Facts -> Facts
+noPlayerCanHoldACardSomeoneElseIsHolding card facts =
+    let
+        factsForThisCard =
+            Dict.filter (\factKey _ -> keyForCard card == Tuple.first factKey) facts
+    in
+    if any (\_ v -> v == Holding) factsForThisCard then
+        factsForThisCard
+            |> updateWhere (\_ v -> v /= Holding) (\_ _ -> NotHolding)
+            |> (\d -> Dict.union d facts)
+
+    else
+        facts
+
+
+noPlayersCanHoldAnyCardSomeoneElseIsHolding : Facts -> Facts
+noPlayersCanHoldAnyCardSomeoneElseIsHolding facts =
+    List.foldr noPlayerCanHoldACardSomeoneElseIsHolding facts allCards
+
+
+playerCountCanDetermineMaxCards : Int -> Bool
+playerCountCanDetermineMaxCards playerCount =
+    playerCount == 3 || playerCount == 6
+
+
+getMaxCardsPerPlayer : Int -> Int
+getMaxCardsPerPlayer playerCount =
+    if playerCount == 3 then
+        4
+
+    else
+        3
+
+
+restrictToNCards : Int -> Int -> Facts -> Facts
+restrictToNCards maxCards playerId facts =
+    let
+        factsForPlayer =
+            Dict.filter (\factKey _ -> Tuple.second factKey == playerId) facts
+
+        numberOfCardsHeldByPlayer =
+            facts
+                |> Dict.filter (\factKey holdingStatus -> Tuple.second factKey == playerId && holdingStatus == Holding)
+                |> Dict.size
+    in
+    if numberOfCardsHeldByPlayer == maxCards then
+        factsForPlayer
+            |> updateWhere (\_ v -> v /= Holding) (\_ _ -> NotHolding)
+            |> (\d -> Dict.union d facts)
+
+    else
+        facts
+
+
+ensureNoPlayerHasMoreThanNCards : List Int -> Int -> Facts -> Facts
+ensureNoPlayerHasMoreThanNCards playerIds maxCards facts =
+    List.foldr (restrictToNCards maxCards) facts playerIds
+
+
+playersCannotExceedMaximumNumberOfCards : List Int -> Facts -> Facts
+playersCannotExceedMaximumNumberOfCards playerIds facts =
+    if playerCountCanDetermineMaxCards (List.length playerIds) then
+        let
+            maxCardsPerPlayer =
+                getMaxCardsPerPlayer (List.length playerIds)
+        in
+        ensureNoPlayerHasMoreThanNCards playerIds maxCardsPerPlayer facts
+
+    else
+        facts
+
+
+checkCombination : PlayerId -> List Card -> Facts -> Facts
+checkCombination playerId cards facts =
+    let
+        factsForPlayer =
+            facts
+                |> Dict.filter (\key _ -> Tuple.second key == playerId)
+
+        numberFromComboNotHolding =
+            factsForPlayer
+                |> Dict.filter (\key _ -> List.member (Tuple.first key) (List.map keyForCard cards))
+                |> Dict.filter (\_ status -> status == NotHolding)
+                |> Dict.size
+    in
+    if numberFromComboNotHolding == 2 then
+        factsForPlayer
+            |> updateWhere (\_ v -> v /= NotHolding) (\_ _ -> Holding)
+            |> (\d -> Dict.union d facts)
+
+    else
+        facts
+
+
+checkPlayerHistory : List CompleteGuess -> PlayerId -> Facts -> Facts
+checkPlayerHistory history playerId facts =
+    let
+        playerRevealCombinations =
+            history
+                |> List.filter (\guess -> guess.shower == Just playerId)
+                |> List.map (\guess -> [ PersonTag guess.person, WeaponTag guess.weapon, RoomTag guess.room ])
+    in
+    List.foldr (checkCombination playerId) facts playerRevealCombinations
+
+
+playersWhoShowedOneOfThreeCardsInThePastMustHoldOneOfThoseCards : List CompleteGuess -> List PlayerId -> Facts -> Facts
+playersWhoShowedOneOfThreeCardsInThePastMustHoldOneOfThoseCards history playerIds facts =
+    List.foldr (checkPlayerHistory history) facts playerIds
+
+
+analyze : List Int -> List CompleteGuess -> Facts -> Facts
+analyze playerIds history facts =
     let
         newFacts =
             facts
+                |> noPlayersCanHoldAnyCardSomeoneElseIsHolding
+                |> playersWhoShowedOneOfThreeCardsInThePastMustHoldOneOfThoseCards history playerIds
+                |> playersCannotExceedMaximumNumberOfCards playerIds
     in
     if newFacts == facts then
         newFacts
 
     else
-        analyze playerCount history newFacts
+        analyze playerIds history newFacts
 
 
 setPlayerMightHaveCard : Card -> PlayerId -> Facts -> Facts
