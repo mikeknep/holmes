@@ -4,12 +4,25 @@ import Browser exposing (element)
 import Domain exposing (..)
 import Facts exposing (Facts, HoldingStatus(..))
 import GameBoard
-import GameState exposing (GameState(..), SubjectOfInvestigation(..))
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import List.Extra exposing (takeWhile, takeWhileRight)
 import Player exposing (Player, PlayerId, Players)
+
+
+type SubjectOfInvestigation
+    = PlayerHand PlayerId
+    | People
+    | Weapons
+    | Rooms
+
+
+type GameState
+    = Setup String
+    | Guessing PlayerId InProgressGuess
+    | Revealing CompleteGuess
+    | Investigating SubjectOfInvestigation
 
 
 
