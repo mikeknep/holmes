@@ -4,7 +4,6 @@ import CardPresenter
 import Dict exposing (..)
 import Domain exposing (..)
 import Facts exposing (Facts, HoldingStatus(..))
-import FactsPresenter
 import Html exposing (..)
 import Html.Attributes exposing (class)
 import Player exposing (Player, PlayerId)
@@ -46,7 +45,7 @@ cardPlayerCell facts card playerId =
         holdingStatus =
             Facts.getHoldingStatus facts card playerId
     in
-    td [] [ text (FactsPresenter.displayHoldingStatus holdingStatus) ]
+    td [] [ text (Facts.displayHoldingStatus holdingStatus) ]
 
 
 cardCell : Card -> Html msg

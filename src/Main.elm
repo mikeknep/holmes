@@ -4,7 +4,6 @@ import Browser exposing (element)
 import CardPresenter
 import Domain exposing (..)
 import Facts exposing (Facts, HoldingStatus(..))
-import FactsPresenter
 import GameBoard
 import GameState exposing (GameState(..), SubjectOfInvestigation(..))
 import Html exposing (..)
@@ -412,7 +411,7 @@ playerCardStatusDescListValue facts playerId card =
             Facts.getHoldingStatus facts card playerId
 
         statusText =
-            text (FactsPresenter.displayHoldingStatus holdingStatus)
+            text (Facts.displayHoldingStatus holdingStatus)
     in
     case holdingStatus of
         Just (MaybeHolding count) ->

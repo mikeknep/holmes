@@ -2,6 +2,7 @@ module Facts exposing
     ( Facts
     , HoldingStatus(..)
     , analyze
+    , displayHoldingStatus
     , getHoldingStatus
     , initFacts
     , openingFacts
@@ -227,3 +228,19 @@ keyForCard card =
 
         RoomTag room ->
             keyForRoom room
+
+
+displayHoldingStatus : Maybe HoldingStatus -> String
+displayHoldingStatus holdingStatus =
+    case holdingStatus of
+        Just NotHolding ->
+            "No"
+
+        Just (MaybeHolding count) ->
+            "Maybe: " ++ String.fromInt count
+
+        Just Holding ->
+            "Yes!"
+
+        _ ->
+            "This should be impossible"
