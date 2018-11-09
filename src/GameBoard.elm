@@ -7,6 +7,7 @@ import Facts exposing (Facts, HoldingStatus(..))
 import FactsPresenter
 import Html exposing (..)
 import Html.Attributes exposing (class)
+import Player exposing (Player, PlayerId)
 
 
 render : List Card -> Facts -> Dict PlayerId Player -> Html msg
@@ -36,7 +37,7 @@ headerRow players =
 
 playerColumnHeader : Player -> Html msg
 playerColumnHeader player =
-    th [] [ text player.name ]
+    th [] [ text (Player.getName player) ]
 
 
 cardPlayerCell : Facts -> Card -> PlayerId -> Html msg

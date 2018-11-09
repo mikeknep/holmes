@@ -12,7 +12,8 @@ module Facts exposing
 
 import Dict exposing (Dict, empty, get, insert, update)
 import DictHelper exposing (..)
-import Domain exposing (Card(..), CompleteGuess, Person, PlayerId, Room, Weapon, allCards)
+import Domain exposing (Card(..), CompleteGuess, Person, Room, Weapon, allCards)
+import Player exposing (PlayerId)
 
 
 type HoldingStatus

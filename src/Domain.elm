@@ -3,16 +3,15 @@ module Domain exposing
     , CompleteGuess
     , InProgressGuess(..)
     , Person(..)
-    , Player
-    , PlayerId
     , Room(..)
     , Weapon(..)
     , allCards
-    , createPlayer
     , personCards
     , roomCards
     , weaponCards
     )
+
+import Player exposing (PlayerId)
 
 
 type alias CompleteGuess =
@@ -29,23 +28,6 @@ type InProgressGuess
     = NothingIsSet
     | PersonIsSet Person
     | WeaponIsSet Person Weapon
-
-
-type alias PlayerId =
-    Int
-
-
-type alias Player =
-    { id : PlayerId
-    , name : String
-    }
-
-
-createPlayer : PlayerId -> String -> Player
-createPlayer playerId name =
-    { id = playerId
-    , name = name
-    }
 
 
 type Person

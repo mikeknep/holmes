@@ -12,6 +12,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import List.Extra exposing (takeWhile, takeWhileRight)
+import Player exposing (Player, PlayerId)
 
 
 
@@ -74,7 +75,7 @@ addPlayer model =
             in
             ( { model
                 | gameState = Setup ""
-                , players = Dict.insert playerId (createPlayer playerId playerName) model.players
+                , players = Dict.insert playerId (Player.createPlayer playerId playerName) model.players
               }
             , Cmd.none
             )
@@ -293,7 +294,7 @@ addPlayerToGame nameFragment =
 
 listAddedPlayerNames : List Player -> List (Html msg)
 listAddedPlayerNames players =
-    List.map (\player -> p [] [ text player.name ]) players
+    List.map (\player -> p [] [ text (Player.getName player) ]) players
 
 
 setupNewGame : Model -> Html Msg
@@ -345,8 +346,8 @@ showerOptionButtons guess playerId =
 
 showerOption : CompleteGuess -> Player -> List (Html Msg)
 showerOption guess player =
-    [ dt [] [ text player.name ]
-    , dd [] (showerOptionButtons guess player.id)
+    [ dt [] [ text (Player.getName player) ]
+    , dd [] (showerOptionButtons guess (Player.getId player))
     ]
 
 
@@ -363,7 +364,7 @@ otherPlayers : PlayerId -> List Player -> List Player
 otherPlayers guesserId allPlayers =
     let
         isNotGuesser =
-            \player -> player.id /= guesserId
+            \player -> guesserId /= Player.getId player
     in
     takeWhileRight isNotGuesser allPlayers ++ takeWhile isNotGuesser allPlayers
 
@@ -438,7 +439,7 @@ playerCardStatusAsDescriptionListEntry facts playerId card =
 getPlayerName : PlayerId -> Dict PlayerId Player -> String
 getPlayerName playerId players =
     Dict.get playerId players
-        |> Maybe.map .name
+        |> Maybe.map Player.getName
         |> Maybe.withDefault "???"
 
 
@@ -496,7 +497,7 @@ mainDisplay model =
 
 investigatePlayerButton : Player -> Html Msg
 investigatePlayerButton player =
-    a [ class "button", onClick (Investigate (PlayerHand player.id)) ] [ text player.name ]
+    a [ class "button", onClick (Investigate (PlayerHand (Player.getId player))) ] [ text (Player.getName player) ]
 
 
 playerSelect : Model -> Html Msg

@@ -1,6 +1,7 @@
 module GameState exposing (GameState(..), SubjectOfInvestigation(..))
 
-import Domain exposing (CompleteGuess, InProgressGuess, PlayerId)
+import Domain exposing (CompleteGuess, InProgressGuess)
+import Player exposing (PlayerId)
 
 
 type SubjectOfInvestigation
