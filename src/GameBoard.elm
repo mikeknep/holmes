@@ -1,6 +1,5 @@
 module GameBoard exposing (render)
 
-import CardPresenter
 import Dict exposing (..)
 import Domain exposing (..)
 import Facts exposing (Facts, HoldingStatus(..))
@@ -50,7 +49,7 @@ cardPlayerCell facts card playerId =
 
 cardCell : Card -> Html msg
 cardCell card =
-    td [] [ text (CardPresenter.displayCard card) ]
+    td [] [ text (Domain.displayCard card) ]
 
 
 cardRow : Facts -> List PlayerId -> Card -> Html msg

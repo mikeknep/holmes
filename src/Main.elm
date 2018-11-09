@@ -1,7 +1,6 @@
 module Main exposing (main)
 
 import Browser exposing (element)
-import CardPresenter
 import Domain exposing (..)
 import Facts exposing (Facts, HoldingStatus(..))
 import GameBoard
@@ -319,7 +318,7 @@ cardOption card =
                 RoomTag room ->
                     SetRoomGuess room
     in
-    a [ class "button", onClick clickHandler ] [ text (CardPresenter.displayCard card) ]
+    a [ class "button", onClick clickHandler ] [ text (Domain.displayCard card) ]
 
 
 selectCard : List Card -> Html Msg
@@ -347,11 +346,11 @@ showerOption guess player =
 
 displayGuess : CompleteGuess -> String
 displayGuess guess =
-    CardPresenter.displayCard (PersonTag guess.person)
+    Domain.displayCard (PersonTag guess.person)
         ++ " :: "
-        ++ CardPresenter.displayCard (WeaponTag guess.weapon)
+        ++ Domain.displayCard (WeaponTag guess.weapon)
         ++ " :: "
-        ++ CardPresenter.displayCard (RoomTag guess.room)
+        ++ Domain.displayCard (RoomTag guess.room)
 
 
 otherPlayers : PlayerId -> List Player -> List Player
@@ -425,7 +424,7 @@ playerCardStatusDescListValue facts playerId card =
 
 playerCardStatusAsDescriptionListEntry : Facts -> PlayerId -> Card -> List (Html Msg)
 playerCardStatusAsDescriptionListEntry facts playerId card =
-    [ dt [] [ text (CardPresenter.displayCard card) ]
+    [ dt [] [ text (Domain.displayCard card) ]
     , dd [] (playerCardStatusDescListValue facts playerId card)
     ]
 
