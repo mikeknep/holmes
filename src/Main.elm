@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import Browser exposing (element)
-import Domain exposing (..)
+import Domain exposing (Card(..), CompleteGuess, InProgressGuess(..), Person(..), Room(..), Weapon(..))
 import Facts exposing (Facts, HoldingStatus(..))
 import GameBoard
 import Html exposing (..)
@@ -94,7 +94,7 @@ startGame : Model -> ( Model, Cmd Msg )
 startGame model =
     ( { model
         | gameState = Investigating People
-        , facts = Facts.openingFacts allCards (Player.allIds model.players)
+        , facts = Facts.openingFacts Domain.allCards (Player.allIds model.players)
       }
     , Cmd.none
     )
@@ -387,13 +387,13 @@ selectCards : InProgressGuess -> Html Msg
 selectCards guess =
     case guess of
         NothingIsSet ->
-            selectCard personCards
+            selectCard Domain.personCards
 
         PersonIsSet _ ->
-            selectCard weaponCards
+            selectCard Domain.weaponCards
 
         WeaponIsSet _ _ ->
-            selectCard roomCards
+            selectCard Domain.roomCards
 
 
 guessingForm : Model -> Html Msg
@@ -451,9 +451,9 @@ playerView playerId model =
     div []
         [ h1 [] [ text (Player.lookupName playerId model.players) ]
         , p [] [ a [ class "button", onClick (BeginGuess playerId) ] [ text "Begin guess" ] ]
-        , dl [] (List.concatMap playerCardStatusAsDL personCards)
-        , dl [] (List.concatMap playerCardStatusAsDL weaponCards)
-        , dl [] (List.concatMap playerCardStatusAsDL roomCards)
+        , dl [] (List.concatMap playerCardStatusAsDL Domain.personCards)
+        , dl [] (List.concatMap playerCardStatusAsDL Domain.weaponCards)
+        , dl [] (List.concatMap playerCardStatusAsDL Domain.roomCards)
         ]
 
 
@@ -464,13 +464,13 @@ investigatingView subject model =
             playerView playerId model
 
         People ->
-            GameBoard.render personCards model.facts model.players
+            GameBoard.render Domain.personCards model.facts model.players
 
         Weapons ->
-            GameBoard.render weaponCards model.facts model.players
+            GameBoard.render Domain.weaponCards model.facts model.players
 
         Rooms ->
-            GameBoard.render roomCards model.facts model.players
+            GameBoard.render Domain.roomCards model.facts model.players
 
 
 renderMainDisplay : Model -> Html Msg

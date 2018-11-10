@@ -13,7 +13,7 @@ module Facts exposing
 
 import Dict exposing (Dict, empty, get, insert, update)
 import DictHelper exposing (..)
-import Domain exposing (Card(..), CompleteGuess, Person, Room, Weapon, allCards)
+import Domain exposing (Card(..), CompleteGuess, Person, Room, Weapon)
 import Player exposing (PlayerId)
 
 
@@ -63,7 +63,7 @@ noPlayerCanHoldACardSomeoneElseIsHolding card facts =
 
 noPlayersCanHoldAnyCardSomeoneElseIsHolding : Facts -> Facts
 noPlayersCanHoldAnyCardSomeoneElseIsHolding facts =
-    List.foldr noPlayerCanHoldACardSomeoneElseIsHolding facts allCards
+    List.foldr noPlayerCanHoldACardSomeoneElseIsHolding facts Domain.allCards
 
 
 playerCountCanDetermineMaxCards : Int -> Bool

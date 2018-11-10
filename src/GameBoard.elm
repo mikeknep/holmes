@@ -1,7 +1,7 @@
 module GameBoard exposing (render)
 
 import Dict exposing (..)
-import Domain exposing (..)
+import Domain exposing (Card(..))
 import Facts exposing (Facts, HoldingStatus(..))
 import Html exposing (..)
 import Html.Attributes exposing (class)
