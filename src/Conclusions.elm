@@ -25,9 +25,10 @@ from players guessHistory =
         |> Conclusions
 
 
-getHoldingStatus : Conclusions -> CardId -> PlayerId -> Maybe HoldingStatus
+getHoldingStatus : Conclusions -> CardId -> PlayerId -> HoldingStatus
 getHoldingStatus (Conclusions dict) cardId playerId =
     Dict.get ( cardId, playerId ) dict
+        |> Maybe.withDefault NotHolding
 
 
 type Conclusions

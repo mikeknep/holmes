@@ -53,9 +53,9 @@ all =
                         from testPlayers [ guess ]
 
                     expectedStatuses =
-                        ( Just NotHolding
-                        , Just NotHolding
-                        , Just NotHolding
+                        ( NotHolding
+                        , NotHolding
+                        , NotHolding
                         )
 
                     actualStatuses =
@@ -87,9 +87,9 @@ all =
                         from testPlayers [ guess ]
 
                     expectedStatuses =
-                        ( Just (MaybeHolding 1)
-                        , Just (MaybeHolding 1)
-                        , Just (MaybeHolding 1)
+                        ( MaybeHolding 1
+                        , MaybeHolding 1
+                        , MaybeHolding 1
                         )
 
                     actualStatuses =
@@ -131,9 +131,9 @@ all =
                         from testPlayers [ guessOne, guessTwo ]
 
                     expectedStatuses =
-                        ( Just (MaybeHolding 2)
-                        , Just (MaybeHolding 2)
-                        , Just (MaybeHolding 2)
+                        ( MaybeHolding 2
+                        , MaybeHolding 2
+                        , MaybeHolding 2
                         )
 
                     actualStatuses =
@@ -171,15 +171,15 @@ all =
                         from testPlayers [ guess ]
 
                     expectedShowerStatuses =
-                        ( Just (MaybeHolding 1)
-                        , Just Holding
-                        , Just (MaybeHolding 1)
+                        ( MaybeHolding 1
+                        , Holding
+                        , MaybeHolding 1
                         )
 
                     expectedOtherPlayerStatuses =
-                        ( Just (MaybeHolding 0)
-                        , Just NotHolding
-                        , Just (MaybeHolding 0)
+                        ( MaybeHolding 0
+                        , NotHolding
+                        , MaybeHolding 0
                         )
 
                     actualShowerStatuses =
@@ -231,7 +231,7 @@ all =
                     playerThreeHallStatus =
                         getHoldingStatus conclusions "hall" playerId
                 in
-                Expect.equal (Just Holding) playerThreeHallStatus
+                Expect.equal Holding playerThreeHallStatus
         , test """
         When there are six players in the game,
         and a player is known to have three cards,
@@ -278,7 +278,7 @@ all =
                     otherCardStatus =
                         getHoldingStatus conclusions "conservatory" playerId
                 in
-                Expect.equal (Just NotHolding) otherCardStatus
+                Expect.equal NotHolding otherCardStatus
         , test """
         When there are three players in the game,
         and a player is known to have four cards,
@@ -341,5 +341,5 @@ all =
                     otherCardStatus =
                         getHoldingStatus conclusions "knife" playerId
                 in
-                Expect.equal (Just NotHolding) otherCardStatus
+                Expect.equal NotHolding otherCardStatus
         ]
