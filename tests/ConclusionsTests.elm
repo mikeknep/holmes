@@ -49,6 +49,9 @@ all =
                             |> extractGuess
                             |> addNoShowToGuess noShowId
 
+                    conclusions =
+                        from testPlayers [ guess ]
+
                     expectedStatuses =
                         ( Just NotHolding
                         , Just NotHolding
@@ -56,9 +59,9 @@ all =
                         )
 
                     actualStatuses =
-                        ( getHoldingStatus testPlayers [ guess ] (getCardId testPersonCard) noShowId
-                        , getHoldingStatus testPlayers [ guess ] (getCardId testWeaponCard) noShowId
-                        , getHoldingStatus testPlayers [ guess ] (getCardId testRoomCard) noShowId
+                        ( getHoldingStatus conclusions (getCardId testPersonCard) noShowId
+                        , getHoldingStatus conclusions (getCardId testWeaponCard) noShowId
+                        , getHoldingStatus conclusions (getCardId testRoomCard) noShowId
                         )
                 in
                 Expect.equal expectedStatuses actualStatuses
@@ -80,6 +83,9 @@ all =
                             |> extractGuess
                             |> addShowerToGuess showerId
 
+                    conclusions =
+                        from testPlayers [ guess ]
+
                     expectedStatuses =
                         ( Just (MaybeHolding 1)
                         , Just (MaybeHolding 1)
@@ -87,9 +93,9 @@ all =
                         )
 
                     actualStatuses =
-                        ( getHoldingStatus testPlayers [ guess ] (getCardId testPersonCard) showerId
-                        , getHoldingStatus testPlayers [ guess ] (getCardId testWeaponCard) showerId
-                        , getHoldingStatus testPlayers [ guess ] (getCardId testRoomCard) showerId
+                        ( getHoldingStatus conclusions (getCardId testPersonCard) showerId
+                        , getHoldingStatus conclusions (getCardId testWeaponCard) showerId
+                        , getHoldingStatus conclusions (getCardId testRoomCard) showerId
                         )
                 in
                 Expect.equal expectedStatuses actualStatuses
@@ -121,6 +127,9 @@ all =
                             |> extractGuess
                             |> addShowerToGuess showerId
 
+                    conclusions =
+                        from testPlayers [ guessOne, guessTwo ]
+
                     expectedStatuses =
                         ( Just (MaybeHolding 2)
                         , Just (MaybeHolding 2)
@@ -128,9 +137,9 @@ all =
                         )
 
                     actualStatuses =
-                        ( getHoldingStatus testPlayers [ guessOne, guessTwo ] (getCardId testPersonCard) showerId
-                        , getHoldingStatus testPlayers [ guessOne, guessTwo ] (getCardId testWeaponCard) showerId
-                        , getHoldingStatus testPlayers [ guessOne, guessTwo ] (getCardId testRoomCard) showerId
+                        ( getHoldingStatus conclusions (getCardId testPersonCard) showerId
+                        , getHoldingStatus conclusions (getCardId testWeaponCard) showerId
+                        , getHoldingStatus conclusions (getCardId testRoomCard) showerId
                         )
                 in
                 Expect.equal expectedStatuses actualStatuses
@@ -158,6 +167,9 @@ all =
                             |> addShowerToGuess showerId
                             |> addRevealedCardToGuess (getCardId testWeaponCard)
 
+                    conclusions =
+                        from testPlayers [ guess ]
+
                     expectedShowerStatuses =
                         ( Just (MaybeHolding 1)
                         , Just Holding
@@ -171,15 +183,15 @@ all =
                         )
 
                     actualShowerStatuses =
-                        ( getHoldingStatus testPlayers [ guess ] (getCardId testPersonCard) showerId
-                        , getHoldingStatus testPlayers [ guess ] (getCardId testWeaponCard) showerId
-                        , getHoldingStatus testPlayers [ guess ] (getCardId testRoomCard) showerId
+                        ( getHoldingStatus conclusions (getCardId testPersonCard) showerId
+                        , getHoldingStatus conclusions (getCardId testWeaponCard) showerId
+                        , getHoldingStatus conclusions (getCardId testRoomCard) showerId
                         )
 
                     actualOtherPlayerStatuses =
-                        ( getHoldingStatus testPlayers [ guess ] (getCardId testPersonCard) otherPlayerId
-                        , getHoldingStatus testPlayers [ guess ] (getCardId testWeaponCard) otherPlayerId
-                        , getHoldingStatus testPlayers [ guess ] (getCardId testRoomCard) otherPlayerId
+                        ( getHoldingStatus conclusions (getCardId testPersonCard) otherPlayerId
+                        , getHoldingStatus conclusions (getCardId testWeaponCard) otherPlayerId
+                        , getHoldingStatus conclusions (getCardId testRoomCard) otherPlayerId
                         )
                 in
                 Expect.equal
@@ -213,8 +225,11 @@ all =
                             |> extractGuess
                             |> addNoShowToGuess playerId
 
+                    conclusions =
+                        from testPlayers [ guessOne, guessTwo ]
+
                     playerThreeHallStatus =
-                        getHoldingStatus testPlayers [ guessOne, guessTwo ] "hall" playerId
+                        getHoldingStatus conclusions "hall" playerId
                 in
                 Expect.equal (Just Holding) playerThreeHallStatus
         , test """
@@ -257,8 +272,11 @@ all =
                             |> addShowerToGuess playerId
                             |> addRevealedCardToGuess "hall"
 
+                    conclusions =
+                        from testPlayers [ guessOne, guessTwo, guessThree ]
+
                     otherCardStatus =
-                        getHoldingStatus testPlayers [ guessOne, guessTwo, guessThree ] "conservatory" playerId
+                        getHoldingStatus conclusions "conservatory" playerId
                 in
                 Expect.equal (Just NotHolding) otherCardStatus
         , test """
@@ -317,8 +335,11 @@ all =
                             |> addShowerToGuess playerId
                             |> addRevealedCardToGuess "white"
 
+                    conclusions =
+                        from threePlayers [ guessOne, guessTwo, guessThree, guessFour ]
+
                     otherCardStatus =
-                        getHoldingStatus threePlayers [ guessOne, guessTwo, guessThree, guessFour ] "knife" playerId
+                        getHoldingStatus conclusions "knife" playerId
                 in
                 Expect.equal (Just NotHolding) otherCardStatus
         ]

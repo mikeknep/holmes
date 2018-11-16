@@ -1,5 +1,7 @@
 module Conclusions exposing
-    ( HoldingStatus(..)
+    ( Conclusions
+    , HoldingStatus(..)
+    , from
     , getHoldingStatus
     )
 
@@ -15,19 +17,28 @@ type HoldingStatus
     | Holding
 
 
-getHoldingStatus : Players -> List CompleteGuess -> CardId -> PlayerId -> Maybe HoldingStatus
-getHoldingStatus players guessHistory cardId playerId =
+from : Players -> List CompleteGuess -> Conclusions
+from players guessHistory =
     setupConclusions (Player.allIds players)
         |> applyHistoricalFacts guessHistory
         |> analyze players guessHistory
-        |> Dict.get ( cardId, playerId )
+        |> Conclusions
 
 
-type alias Conclusions =
+getHoldingStatus : Conclusions -> CardId -> PlayerId -> Maybe HoldingStatus
+getHoldingStatus (Conclusions dict) cardId playerId =
+    Dict.get ( cardId, playerId ) dict
+
+
+type Conclusions
+    = Conclusions ConclusionsDict
+
+
+type alias ConclusionsDict =
     Dict ( CardId, PlayerId ) HoldingStatus
 
 
-setupConclusions : List PlayerId -> Conclusions
+setupConclusions : List PlayerId -> ConclusionsDict
 setupConclusions playerIds =
     let
         setInitialConclusions =
@@ -40,24 +51,24 @@ setupConclusions playerIds =
     List.foldl reducer Dict.empty Clue.allCards
 
 
-applyHistoricalFacts : List CompleteGuess -> Conclusions -> Conclusions
+applyHistoricalFacts : List CompleteGuess -> ConclusionsDict -> ConclusionsDict
 applyHistoricalFacts history conclusions =
     List.foldl applyGuessFacts conclusions history
 
 
-applyGuessFacts : CompleteGuess -> Conclusions -> Conclusions
+applyGuessFacts : CompleteGuess -> ConclusionsDict -> ConclusionsDict
 applyGuessFacts guess conclusions =
     conclusions
         |> setNoShowStatuses guess
         |> setShowerStatuses guess
 
 
-setNoShowStatuses : CompleteGuess -> Conclusions -> Conclusions
+setNoShowStatuses : CompleteGuess -> ConclusionsDict -> ConclusionsDict
 setNoShowStatuses guess conclusions =
     List.foldl (setNoShowToNotHaveCards guess) conclusions (Clue.getNoShows guess)
 
 
-setNoShowToNotHaveCards : CompleteGuess -> PlayerId -> Conclusions -> Conclusions
+setNoShowToNotHaveCards : CompleteGuess -> PlayerId -> ConclusionsDict -> ConclusionsDict
 setNoShowToNotHaveCards guess playerId conclusions =
     let
         reducer =
@@ -66,7 +77,7 @@ setNoShowToNotHaveCards guess playerId conclusions =
     List.foldl reducer conclusions (Clue.getCardIdsFromGuess guess)
 
 
-setShowerStatuses : CompleteGuess -> Conclusions -> Conclusions
+setShowerStatuses : CompleteGuess -> ConclusionsDict -> ConclusionsDict
 setShowerStatuses guess conclusions =
     let
         reducer =
@@ -100,7 +111,7 @@ incrementMaybe status =
             status
 
 
-analyze : Players -> List CompleteGuess -> Conclusions -> Conclusions
+analyze : Players -> List CompleteGuess -> ConclusionsDict -> ConclusionsDict
 analyze players history conclusions =
     let
         newConclusions =
@@ -116,7 +127,7 @@ analyze players history conclusions =
         analyze players history newConclusions
 
 
-noPlayerCanHoldACardSomeoneElseIsHolding : CardId -> Conclusions -> Conclusions
+noPlayerCanHoldACardSomeoneElseIsHolding : CardId -> ConclusionsDict -> ConclusionsDict
 noPlayerCanHoldACardSomeoneElseIsHolding cardId conclusions =
     let
         conclusionsForThisCard =
@@ -131,7 +142,7 @@ noPlayerCanHoldACardSomeoneElseIsHolding cardId conclusions =
         conclusions
 
 
-noPlayersCanHoldAnyCardSomeoneElseIsHolding : Conclusions -> Conclusions
+noPlayersCanHoldAnyCardSomeoneElseIsHolding : ConclusionsDict -> ConclusionsDict
 noPlayersCanHoldAnyCardSomeoneElseIsHolding conclusions =
     let
         cardIds =
@@ -140,7 +151,7 @@ noPlayersCanHoldAnyCardSomeoneElseIsHolding conclusions =
     List.foldl noPlayerCanHoldACardSomeoneElseIsHolding conclusions cardIds
 
 
-checkCombination : PlayerId -> List CardId -> Conclusions -> Conclusions
+checkCombination : PlayerId -> List CardId -> ConclusionsDict -> ConclusionsDict
 checkCombination playerId cardIds conclusions =
     let
         factsForPlayer =
@@ -172,7 +183,7 @@ playerShowedCardForGuess playerId guess =
             False
 
 
-checkPlayerHistory : List CompleteGuess -> PlayerId -> Conclusions -> Conclusions
+checkPlayerHistory : List CompleteGuess -> PlayerId -> ConclusionsDict -> ConclusionsDict
 checkPlayerHistory history playerId conclusions =
     let
         playerRevealCombinations =
@@ -183,12 +194,12 @@ checkPlayerHistory history playerId conclusions =
     List.foldl (checkCombination playerId) conclusions playerRevealCombinations
 
 
-playersWhoShowedOneOfThreeCardsInThePastMustHoldOneOfThoseCards : Players -> List CompleteGuess -> Conclusions -> Conclusions
+playersWhoShowedOneOfThreeCardsInThePastMustHoldOneOfThoseCards : Players -> List CompleteGuess -> ConclusionsDict -> ConclusionsDict
 playersWhoShowedOneOfThreeCardsInThePastMustHoldOneOfThoseCards players history conclusions =
     List.foldl (checkPlayerHistory history) conclusions (Player.allIds players)
 
 
-playersCannotExceedMaximumNumberOfCards : Players -> Conclusions -> Conclusions
+playersCannotExceedMaximumNumberOfCards : Players -> ConclusionsDict -> ConclusionsDict
 playersCannotExceedMaximumNumberOfCards players conclusions =
     let
         numberOfPlayers =
@@ -212,7 +223,7 @@ playersCannotExceedMaximumNumberOfCards players conclusions =
         conclusions
 
 
-ensureNoPlayerHasMoreThanNCards : Int -> Player -> Conclusions -> Conclusions
+ensureNoPlayerHasMoreThanNCards : Int -> Player -> ConclusionsDict -> ConclusionsDict
 ensureNoPlayerHasMoreThanNCards maxCards player conclusions =
     let
         playerId =
