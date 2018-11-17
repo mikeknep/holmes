@@ -2,15 +2,20 @@ module Clue exposing
     ( Card
     , CardId
     , CompleteGuess
+    , IncompleteGuess
     , addCardToGuess
     , addNoShowToGuess
     , addRevealedCardToGuess
     , addShowerToGuess
     , allCards
     , beginGuess
+    , displayCard
+    , displayCardWithId
     , finishGuess
     , getCardId
     , getCardIdsFromGuess
+    , getCardOptionsForGuess
+    , getGuesser
     , getNoShows
     , getShower
     , personCards
@@ -53,6 +58,23 @@ type alias CardDetails =
     { displayName : String
     , id : CardId
     }
+
+
+displayCard : Card -> String
+displayCard (Card { displayName }) =
+    displayName
+
+
+getCardWithId : CardId -> Maybe Card
+getCardWithId cardId =
+    allCards
+        |> List.filter (\card -> getCardId card == cardId)
+        |> List.head
+
+
+displayCardWithId : CardId -> String
+displayCardWithId cardId =
+    getCardWithId cardId |> Maybe.map displayCard |> Maybe.withDefault ""
 
 
 testPersonCard : Card
@@ -218,14 +240,19 @@ addShowerToGuess playerId (CompleteGuess details) =
     CompleteGuess { details | shower = Just ( playerId, Nothing ) }
 
 
-addRevealedCardToGuess : CardId -> CompleteGuess -> CompleteGuess
-addRevealedCardToGuess cardId (CompleteGuess details) =
+addRevealedCardToGuess : Maybe CardId -> CompleteGuess -> CompleteGuess
+addRevealedCardToGuess maybeCardId (CompleteGuess details) =
     case details.shower of
         Just ( player, Nothing ) ->
-            CompleteGuess { details | shower = Just ( player, Just cardId ) }
+            CompleteGuess { details | shower = Just ( player, maybeCardId ) }
 
         _ ->
             CompleteGuess details
+
+
+getGuesser : CompleteGuess -> PlayerId
+getGuesser (CompleteGuess { guesser }) =
+    guesser
 
 
 getShower : CompleteGuess -> Maybe ( PlayerId, Maybe CardId )
@@ -236,3 +263,19 @@ getShower (CompleteGuess { shower }) =
 getCardIdsFromGuess : CompleteGuess -> List CardId
 getCardIdsFromGuess (CompleteGuess { person, weapon, room }) =
     [ person, weapon, room ]
+
+
+getCardOptionsForGuess : IncompleteGuess -> List Card
+getCardOptionsForGuess (IncompleteGuess { person, weapon, room }) =
+    case ( person, weapon, room ) of
+        ( Nothing, _, _ ) ->
+            personCards
+
+        ( _, Nothing, _ ) ->
+            weaponCards
+
+        ( _, _, Nothing ) ->
+            roomCards
+
+        _ ->
+            []

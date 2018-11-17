@@ -141,7 +141,7 @@ all =
                                 |> finishGuess
                                 |> extractGuess
                                 |> addShowerToGuess showerId
-                                |> addRevealedCardToGuess cardId
+                                |> addRevealedCardToGuess (Just cardId)
                     in
                     Expect.equal (Just ( showerId, Just cardId )) (getShower guess)
             , test "retrieving the card IDs for the person, weapon, and room from a complete guess" <|

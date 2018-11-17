@@ -1,19 +1,19 @@
 module GameBoard exposing (render)
 
+import Clue exposing (Card)
+import Conclusions exposing (Conclusions, HoldingStatus(..))
 import Dict exposing (..)
-import Domain exposing (Card(..))
-import Facts exposing (Facts, HoldingStatus(..))
 import Html exposing (..)
 import Html.Attributes exposing (class)
-import Player exposing (Player, PlayerId)
+import Player exposing (Player, PlayerId, Players)
 
 
-render : List Card -> Facts -> Dict PlayerId Player -> Html msg
-render cards facts players =
+render : List Card -> Conclusions -> Players -> Html msg
+render cards conclusions players =
     div []
         [ table [ class "table" ]
-            ([ headerRow (Dict.values players) ]
-                ++ List.map (cardRow facts (Dict.keys players)) cards
+            ([ headerRow (Player.allPlayers players) ]
+                ++ List.map (cardRow conclusions (Dict.keys players)) cards
             )
         ]
 
@@ -38,20 +38,33 @@ playerColumnHeader player =
     th [] [ text (Player.getName player) ]
 
 
-cardPlayerCell : Facts -> Card -> PlayerId -> Html msg
-cardPlayerCell facts card playerId =
+displayHoldingStatus : HoldingStatus -> String
+displayHoldingStatus status =
+    case status of
+        NotHolding ->
+            "No"
+
+        MaybeHolding count ->
+            "Maybe (" ++ String.fromInt count ++ ")"
+
+        Holding ->
+            "Yes"
+
+
+cardPlayerCell : Conclusions -> Card -> PlayerId -> Html msg
+cardPlayerCell conclusions card playerId =
     let
         holdingStatus =
-            Facts.getHoldingStatus facts card playerId
+            Conclusions.getHoldingStatus conclusions (Clue.getCardId card) playerId
     in
-    td [] [ text (Facts.displayHoldingStatus holdingStatus) ]
+    td [] [ text (displayHoldingStatus holdingStatus) ]
 
 
 cardCell : Card -> Html msg
 cardCell card =
-    td [] [ text (Domain.displayCard card) ]
+    td [] [ text (Clue.displayCard card) ]
 
 
-cardRow : Facts -> List PlayerId -> Card -> Html msg
-cardRow facts playerIds card =
-    tr [] (cardCell card :: List.map (cardPlayerCell facts card) playerIds)
+cardRow : Conclusions -> List PlayerId -> Card -> Html msg
+cardRow conclusions playerIds card =
+    tr [] (cardCell card :: List.map (cardPlayerCell conclusions card) playerIds)

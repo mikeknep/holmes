@@ -165,7 +165,7 @@ all =
                             |> finishGuess
                             |> extractGuess
                             |> addShowerToGuess showerId
-                            |> addRevealedCardToGuess (getCardId testWeaponCard)
+                            |> addRevealedCardToGuess (Just (getCardId testWeaponCard))
 
                     conclusions =
                         from testPlayers [ guess ]
@@ -250,7 +250,7 @@ all =
                             |> finishGuess
                             |> extractGuess
                             |> addShowerToGuess playerId
-                            |> addRevealedCardToGuess "plum"
+                            |> addRevealedCardToGuess (Just "plum")
 
                     guessTwo =
                         Clue.beginGuess 1
@@ -260,7 +260,7 @@ all =
                             |> finishGuess
                             |> extractGuess
                             |> addShowerToGuess playerId
-                            |> addRevealedCardToGuess "knife"
+                            |> addRevealedCardToGuess (Just "knife")
 
                     guessThree =
                         Clue.beginGuess 2
@@ -270,7 +270,7 @@ all =
                             |> finishGuess
                             |> extractGuess
                             |> addShowerToGuess playerId
-                            |> addRevealedCardToGuess "hall"
+                            |> addRevealedCardToGuess (Just "hall")
 
                     conclusions =
                         from testPlayers [ guessOne, guessTwo, guessThree ]
@@ -303,7 +303,7 @@ all =
                             |> finishGuess
                             |> extractGuess
                             |> addShowerToGuess playerId
-                            |> addRevealedCardToGuess "plum"
+                            |> addRevealedCardToGuess (Just "plum")
 
                     guessTwo =
                         Clue.beginGuess 1
@@ -313,7 +313,7 @@ all =
                             |> finishGuess
                             |> extractGuess
                             |> addShowerToGuess playerId
-                            |> addRevealedCardToGuess "green"
+                            |> addRevealedCardToGuess (Just "green")
 
                     guessThree =
                         Clue.beginGuess 0
@@ -323,7 +323,7 @@ all =
                             |> finishGuess
                             |> extractGuess
                             |> addShowerToGuess playerId
-                            |> addRevealedCardToGuess "mustard"
+                            |> addRevealedCardToGuess (Just "mustard")
 
                     guessFour =
                         Clue.beginGuess 1
@@ -333,7 +333,7 @@ all =
                             |> finishGuess
                             |> extractGuess
                             |> addShowerToGuess playerId
-                            |> addRevealedCardToGuess "white"
+                            |> addRevealedCardToGuess (Just "white")
 
                     conclusions =
                         from threePlayers [ guessOne, guessTwo, guessThree, guessFour ]
