@@ -14,31 +14,35 @@ module Player exposing
 import Dict exposing (..)
 
 
-type alias Players =
+type Players
+    = Players PlayersDict
+
+
+type alias PlayersDict =
     Dict PlayerId Player
 
 
 noPlayers : Players
 noPlayers =
-    Dict.empty
+    Players Dict.empty
 
 
 addNewPlayer : String -> Players -> Players
-addNewPlayer name players =
+addNewPlayer name (Players players) =
     let
         id =
             Dict.size players
     in
-    Dict.insert id (createPlayer id name) players
+    Players (Dict.insert id (createPlayer id name) players)
 
 
 allIds : Players -> List PlayerId
-allIds players =
+allIds (Players players) =
     Dict.keys players
 
 
 allPlayers : Players -> List Player
-allPlayers players =
+allPlayers (Players players) =
     Dict.values players
 
 
@@ -77,7 +81,7 @@ getName (Player { name }) =
 
 
 lookupName : PlayerId -> Players -> String
-lookupName id players =
+lookupName id (Players players) =
     Dict.get id players
         |> Maybe.map getName
         |> Maybe.withDefault "???"
