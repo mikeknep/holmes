@@ -3,7 +3,6 @@ module Main exposing (main)
 import Browser exposing (element)
 import Clue exposing (Card, CardId, CompleteGuess, IncompleteGuess)
 import Conclusions exposing (Conclusions, HoldingStatus(..))
-import GameBoard
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
@@ -419,6 +418,55 @@ playerView conclusions playerId players =
         ]
 
 
+renderGameBoard : List Card -> Conclusions -> Players -> Html msg
+renderGameBoard cards conclusions players =
+    div []
+        [ table [ class "table" ]
+            ([ headerRow (Player.allPlayers players) ]
+                ++ List.map (cardRow conclusions (Player.allIds players)) cards
+            )
+        ]
+
+
+blankCell : Html msg
+blankCell =
+    td [] []
+
+
+blankRow : List Player -> Html msg
+blankRow players =
+    tr [] (blankCell :: List.map (\_ -> blankCell) players)
+
+
+headerRow : List Player -> Html msg
+headerRow players =
+    tr [] (blankCell :: List.map playerColumnHeader players)
+
+
+playerColumnHeader : Player -> Html msg
+playerColumnHeader player =
+    th [] [ text (Player.getName player) ]
+
+
+cardPlayerCell : Conclusions -> Card -> PlayerId -> Html msg
+cardPlayerCell conclusions card playerId =
+    let
+        holdingStatus =
+            Conclusions.getHoldingStatus conclusions (Clue.getCardId card) playerId
+    in
+    td [] [ text (displayHoldingStatus holdingStatus) ]
+
+
+cardCell : Card -> Html msg
+cardCell card =
+    td [] [ text (Clue.displayCard card) ]
+
+
+cardRow : Conclusions -> List PlayerId -> Card -> Html msg
+cardRow conclusions playerIds card =
+    tr [] (cardCell card :: List.map (cardPlayerCell conclusions card) playerIds)
+
+
 investigatingView : SubjectOfInvestigation -> Model -> Html Msg
 investigatingView subject { players, history } =
     let
@@ -430,13 +478,13 @@ investigatingView subject { players, history } =
             playerView conclusions playerId players
 
         People ->
-            GameBoard.render Clue.personCards conclusions players
+            renderGameBoard Clue.personCards conclusions players
 
         Weapons ->
-            GameBoard.render Clue.weaponCards conclusions players
+            renderGameBoard Clue.weaponCards conclusions players
 
         Rooms ->
-            GameBoard.render Clue.roomCards conclusions players
+            renderGameBoard Clue.roomCards conclusions players
 
 
 renderMainDisplay : Model -> Html Msg
