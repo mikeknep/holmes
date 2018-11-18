@@ -29,15 +29,24 @@ noPlayers =
 
 addNewPlayer : String -> Players -> Players
 addNewPlayer name (Players players) =
-    if String.length name == 0 then
+    if String.isEmpty name then
         Players players
 
     else
         let
             id =
                 Dict.size players
+
+            newPlayer =
+                Player
+                    { id = id
+                    , name = name
+                    , numberOfCardsInHand = 4
+                    }
         in
-        Players (Dict.insert id (createPlayer id name) players)
+        players
+            |> Dict.insert id newPlayer
+            |> Players
 
 
 allIds : Players -> List PlayerId
@@ -63,15 +72,6 @@ type alias PlayerDetails =
     , name : String
     , numberOfCardsInHand : Int
     }
-
-
-createPlayer : PlayerId -> String -> Player
-createPlayer playerId name =
-    Player
-        { id = playerId
-        , name = name
-        , numberOfCardsInHand = 4
-        }
 
 
 getId : Player -> PlayerId
