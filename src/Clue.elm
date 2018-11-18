@@ -2,12 +2,15 @@ module Clue exposing
     ( Card
     , CardId
     , CompleteGuess
+    , GuessHistory
     , IncompleteGuess
     , addCardToGuess
+    , addGuessToHistory
     , addNoShowToGuess
     , addRevealedCardToGuess
     , addShowerToGuess
     , allCards
+    , allGuesses
     , beginGuess
     , displayCard
     , displayCardWithId
@@ -18,6 +21,7 @@ module Clue exposing
     , getGuesser
     , getNoShows
     , getShower
+    , noGuesses
     , personCards
     , roomCards
     , testPersonCard
@@ -279,3 +283,22 @@ getCardOptionsForGuess (IncompleteGuess { person, weapon, room }) =
 
         _ ->
             []
+
+
+type GuessHistory
+    = GuessHistory (List CompleteGuess)
+
+
+noGuesses : GuessHistory
+noGuesses =
+    GuessHistory []
+
+
+addGuessToHistory : CompleteGuess -> GuessHistory -> GuessHistory
+addGuessToHistory guess (GuessHistory history) =
+    GuessHistory (guess :: history)
+
+
+allGuesses : GuessHistory -> List CompleteGuess
+allGuesses (GuessHistory history) =
+    history

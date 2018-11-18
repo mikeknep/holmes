@@ -5,7 +5,7 @@ module Conclusions exposing
     , getHoldingStatus
     )
 
-import Clue exposing (CardId, CompleteGuess)
+import Clue exposing (CardId, CompleteGuess, GuessHistory)
 import Dict exposing (..)
 import DictHelper
 import Player exposing (Player, PlayerId, Players)
@@ -17,11 +17,15 @@ type HoldingStatus
     | Holding
 
 
-from : Players -> List CompleteGuess -> Conclusions
+from : Players -> GuessHistory -> Conclusions
 from players guessHistory =
+    let
+        guesses =
+            Clue.allGuesses guessHistory
+    in
     setupConclusions (Player.allIds players)
-        |> applyHistoricalFacts guessHistory
-        |> analyze players guessHistory
+        |> applyHistoricalFacts guesses
+        |> analyze players guesses
         |> Conclusions
 
 

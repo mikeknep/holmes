@@ -49,8 +49,12 @@ all =
                             |> extractGuess
                             |> addNoShowToGuess noShowId
 
+                    history =
+                        Clue.noGuesses
+                            |> Clue.addGuessToHistory guess
+
                     conclusions =
-                        from testPlayers [ guess ]
+                        from testPlayers history
 
                     expectedStatuses =
                         ( NotHolding
@@ -83,8 +87,12 @@ all =
                             |> extractGuess
                             |> addShowerToGuess showerId
 
+                    history =
+                        Clue.noGuesses
+                            |> Clue.addGuessToHistory guess
+
                     conclusions =
-                        from testPlayers [ guess ]
+                        from testPlayers history
 
                     expectedStatuses =
                         ( MaybeHolding 1
@@ -127,8 +135,13 @@ all =
                             |> extractGuess
                             |> addShowerToGuess showerId
 
+                    history =
+                        Clue.noGuesses
+                            |> Clue.addGuessToHistory guessOne
+                            |> Clue.addGuessToHistory guessTwo
+
                     conclusions =
-                        from testPlayers [ guessOne, guessTwo ]
+                        from testPlayers history
 
                     expectedStatuses =
                         ( MaybeHolding 2
@@ -167,8 +180,12 @@ all =
                             |> addShowerToGuess showerId
                             |> addRevealedCardToGuess (Just (getCardId testWeaponCard))
 
+                    history =
+                        Clue.noGuesses
+                            |> Clue.addGuessToHistory guess
+
                     conclusions =
-                        from testPlayers [ guess ]
+                        from testPlayers history
 
                     expectedShowerStatuses =
                         ( MaybeHolding 1
@@ -225,8 +242,13 @@ all =
                             |> extractGuess
                             |> addNoShowToGuess playerId
 
+                    history =
+                        Clue.noGuesses
+                            |> Clue.addGuessToHistory guessOne
+                            |> Clue.addGuessToHistory guessTwo
+
                     conclusions =
-                        from testPlayers [ guessOne, guessTwo ]
+                        from testPlayers history
 
                     playerThreeHallStatus =
                         getHoldingStatus conclusions "hall" playerId
@@ -272,8 +294,14 @@ all =
                             |> addShowerToGuess playerId
                             |> addRevealedCardToGuess (Just "hall")
 
+                    history =
+                        Clue.noGuesses
+                            |> Clue.addGuessToHistory guessOne
+                            |> Clue.addGuessToHistory guessTwo
+                            |> Clue.addGuessToHistory guessThree
+
                     conclusions =
-                        from testPlayers [ guessOne, guessTwo, guessThree ]
+                        from testPlayers history
 
                     otherCardStatus =
                         getHoldingStatus conclusions "conservatory" playerId
@@ -335,8 +363,15 @@ all =
                             |> addShowerToGuess playerId
                             |> addRevealedCardToGuess (Just "white")
 
+                    history =
+                        Clue.noGuesses
+                            |> Clue.addGuessToHistory guessOne
+                            |> Clue.addGuessToHistory guessTwo
+                            |> Clue.addGuessToHistory guessThree
+                            |> Clue.addGuessToHistory guessFour
+
                     conclusions =
-                        from threePlayers [ guessOne, guessTwo, guessThree, guessFour ]
+                        from threePlayers history
 
                     otherCardStatus =
                         getHoldingStatus conclusions "knife" playerId

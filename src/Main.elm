@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import Browser exposing (element)
-import Clue exposing (Card, CardId, CompleteGuess, IncompleteGuess)
+import Clue exposing (Card, CardId, CompleteGuess, GuessHistory, IncompleteGuess)
 import Conclusions exposing (Conclusions, HoldingStatus(..))
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -31,7 +31,7 @@ type GameState
 type alias Model =
     { players : Players
     , gameState : GameState
-    , history : List CompleteGuess
+    , history : GuessHistory
     }
 
 
@@ -39,7 +39,7 @@ init : ( Model, Cmd Msg )
 init =
     ( { players = Player.noPlayers
       , gameState = Setup ""
-      , history = []
+      , history = Clue.noGuesses
       }
     , Cmd.none
     )
@@ -151,7 +151,7 @@ noCardsToShow model playerId =
 
                 updatedHistory =
                     if goneAroundTheCircle then
-                        updatedGuess :: model.history
+                        Clue.addGuessToHistory updatedGuess model.history
 
                     else
                         model.history
@@ -202,7 +202,7 @@ setRevealedCard model maybeCardId =
                     Clue.addRevealedCardToGuess maybeCardId guess
 
                 updatedHistory =
-                    updatedGuess :: model.history
+                    Clue.addGuessToHistory updatedGuess model.history
 
                 updatedState =
                     Investigating People
