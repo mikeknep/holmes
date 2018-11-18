@@ -29,11 +29,15 @@ noPlayers =
 
 addNewPlayer : String -> Players -> Players
 addNewPlayer name (Players players) =
-    let
-        id =
-            Dict.size players
-    in
-    Players (Dict.insert id (createPlayer id name) players)
+    if String.length name == 0 then
+        Players players
+
+    else
+        let
+            id =
+                Dict.size players
+        in
+        Players (Dict.insert id (createPlayer id name) players)
 
 
 allIds : Players -> List PlayerId
