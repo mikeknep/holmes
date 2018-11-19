@@ -51,7 +51,7 @@ init =
 
 type Msg
     = BuildPlayerName String
-    | AddPlayer
+    | AddPlayer Int
     | StartGame
     | Investigate SubjectOfInvestigation
     | BeginGuess PlayerId
@@ -70,13 +70,13 @@ buildPlayerName model nameFragment =
     )
 
 
-addPlayer : Model -> ( Model, Cmd Msg )
-addPlayer model =
+addPlayer : Model -> Int -> ( Model, Cmd Msg )
+addPlayer model cardCount =
     case model.gameState of
         Setup playerName ->
             ( { model
                 | gameState = Setup ""
-                , players = Player.addNewPlayer playerName model.players
+                , players = Player.addNewPlayer playerName cardCount model.players
               }
             , Cmd.none
             )
@@ -221,8 +221,8 @@ update msg model =
         BuildPlayerName nameFragment ->
             buildPlayerName model nameFragment
 
-        AddPlayer ->
-            addPlayer model
+        AddPlayer cardCount ->
+            addPlayer model cardCount
 
         StartGame ->
             startGame model
@@ -258,7 +258,8 @@ title =
 addPlayerToGame : String -> List (Html Msg)
 addPlayerToGame nameFragment =
     [ input [ type_ "text", placeholder "Name", value nameFragment, onInput BuildPlayerName ] []
-    , button [ onClick AddPlayer ] [ text "Add player" ]
+    , button [ onClick (AddPlayer 3) ] [ text "3" ]
+    , button [ onClick (AddPlayer 4) ] [ text "4" ]
     , button [ onClick StartGame ] [ text "Start" ]
     ]
 
