@@ -123,7 +123,7 @@ analyze players history conclusions =
             conclusions
                 |> noPlayersCanHoldAnyCardSomeoneElseIsHolding
                 |> playersWhoShowedOneOfThreeCardsInThePastMustHoldOneOfThoseCards players history
-                |> playersCannotExceedMaximumNumberOfCards players
+                |> playersCannotExceedNumberOfCardsInTheirHand players
     in
     if newConclusions == conclusions then
         newConclusions
@@ -204,32 +204,13 @@ playersWhoShowedOneOfThreeCardsInThePastMustHoldOneOfThoseCards players history 
     List.foldl (checkPlayerHistory history) conclusions (Player.allIds players)
 
 
-playersCannotExceedMaximumNumberOfCards : Players -> ConclusionsDict -> ConclusionsDict
-playersCannotExceedMaximumNumberOfCards players conclusions =
-    let
-        numberOfPlayers =
-            List.length (Player.allIds players)
-
-        numberOfPlayersCanDetermineMaxCards =
-            numberOfPlayers == 3 || numberOfPlayers == 6
-    in
-    if numberOfPlayersCanDetermineMaxCards then
-        let
-            maxCards =
-                if List.length (Player.allIds players) == 3 then
-                    4
-
-                else
-                    3
-        in
-        List.foldl (ensureNoPlayerHasMoreThanNCards maxCards) conclusions (Player.allPlayers players)
-
-    else
-        conclusions
+playersCannotExceedNumberOfCardsInTheirHand : Players -> ConclusionsDict -> ConclusionsDict
+playersCannotExceedNumberOfCardsInTheirHand players conclusions =
+    List.foldl ensureNoPlayerHasMoreThanTheirNumberOfCards conclusions (Player.allPlayers players)
 
 
-ensureNoPlayerHasMoreThanNCards : Int -> Player -> ConclusionsDict -> ConclusionsDict
-ensureNoPlayerHasMoreThanNCards maxCards player conclusions =
+ensureNoPlayerHasMoreThanTheirNumberOfCards : Player -> ConclusionsDict -> ConclusionsDict
+ensureNoPlayerHasMoreThanTheirNumberOfCards player conclusions =
     let
         playerId =
             Player.getId player
@@ -242,7 +223,7 @@ ensureNoPlayerHasMoreThanNCards maxCards player conclusions =
                 |> Dict.filter (\conclusionKey holdingStatus -> Tuple.second conclusionKey == playerId && holdingStatus == Holding)
                 |> Dict.size
     in
-    if numberOfCardsKnownToBeHeldByPlayer == maxCards then
+    if numberOfCardsKnownToBeHeldByPlayer == Player.getNumberOfCardsInHand player then
         conclusionsForPlayer
             |> DictHelper.updateWhere (\_ v -> v /= Holding) (\_ _ -> NotHolding)
             |> (\d -> Dict.union d conclusions)

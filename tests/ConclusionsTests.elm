@@ -255,8 +255,8 @@ all =
                 in
                 Expect.equal Holding playerThreeHallStatus
         , test """
-        When there are six players in the game,
-        and a player is known to have three cards,
+        When a player is holding three cards,
+        and we know which three cards they are,
         they are not holding any other cards.
         """ <|
             \_ ->
@@ -308,8 +308,8 @@ all =
                 in
                 Expect.equal NotHolding otherCardStatus
         , test """
-        When there are three players in the game,
-        and a player is known to have four cards,
+        When a player is holding four cards,
+        and we know which four cards they are,
         they are not holding any other cards.
         """ <|
             \_ ->
@@ -377,4 +377,63 @@ all =
                         getHoldingStatus conclusions "knife" playerId
                 in
                 Expect.equal NotHolding otherCardStatus
+        , test """
+        When a player is holding four cards,
+        and we only know three of them,
+        they still might be holding other cards.
+        """ <|
+            \_ ->
+                let
+                    threePlayers =
+                        Player.noPlayers
+                            |> Player.addNewPlayer "Zach" 4
+                            |> Player.addNewPlayer "Allison" 4
+                            |> Player.addNewPlayer "Bill" 4
+
+                    playerId =
+                        2
+
+                    guessOne =
+                        Clue.beginGuess 0
+                            |> addCardToGuess "plum"
+                            |> addCardToGuess "knife"
+                            |> addCardToGuess "hall"
+                            |> finishGuess
+                            |> extractGuess
+                            |> addShowerToGuess playerId
+                            |> addRevealedCardToGuess (Just "plum")
+
+                    guessTwo =
+                        Clue.beginGuess 1
+                            |> addCardToGuess "green"
+                            |> addCardToGuess "knife"
+                            |> addCardToGuess "hall"
+                            |> finishGuess
+                            |> extractGuess
+                            |> addShowerToGuess playerId
+                            |> addRevealedCardToGuess (Just "green")
+
+                    guessThree =
+                        Clue.beginGuess 0
+                            |> addCardToGuess "mustard"
+                            |> addCardToGuess "knife"
+                            |> addCardToGuess "hall"
+                            |> finishGuess
+                            |> extractGuess
+                            |> addShowerToGuess playerId
+                            |> addRevealedCardToGuess (Just "mustard")
+
+                    history =
+                        Clue.noGuesses
+                            |> Clue.addGuessToHistory guessOne
+                            |> Clue.addGuessToHistory guessTwo
+                            |> Clue.addGuessToHistory guessThree
+
+                    conclusions =
+                        from threePlayers history
+
+                    otherCardStatus =
+                        getHoldingStatus conclusions "white" playerId
+                in
+                Expect.equal (MaybeHolding 0) otherCardStatus
         ]

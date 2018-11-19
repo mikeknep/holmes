@@ -7,6 +7,7 @@ module Player exposing
     , allPlayers
     , getId
     , getName
+    , getNumberOfCardsInHand
     , lookupName
     , noPlayers
     )
@@ -82,6 +83,11 @@ getId (Player { id }) =
 getName : Player -> String
 getName (Player { name }) =
     name
+
+
+getNumberOfCardsInHand : Player -> Int
+getNumberOfCardsInHand (Player { numberOfCardsInHand }) =
+    numberOfCardsInHand
 
 
 lookupName : PlayerId -> Players -> String
