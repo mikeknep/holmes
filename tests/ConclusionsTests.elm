@@ -49,12 +49,12 @@ all =
                             |> extractGuess
                             |> addNoShowToGuess noShowId
 
-                    history =
+                    guessHistory =
                         Clue.noGuesses
                             |> Clue.addGuessToHistory guess
 
                     conclusions =
-                        from testPlayers history
+                        from testPlayers guessHistory Clue.noReveals
 
                     expectedStatuses =
                         ( NotHolding
@@ -87,12 +87,12 @@ all =
                             |> extractGuess
                             |> addShowerToGuess showerId
 
-                    history =
+                    guessHistory =
                         Clue.noGuesses
                             |> Clue.addGuessToHistory guess
 
                     conclusions =
-                        from testPlayers history
+                        from testPlayers guessHistory Clue.noReveals
 
                     expectedStatuses =
                         ( MaybeHolding 1
@@ -135,13 +135,13 @@ all =
                             |> extractGuess
                             |> addShowerToGuess showerId
 
-                    history =
+                    guessHistory =
                         Clue.noGuesses
                             |> Clue.addGuessToHistory guessOne
                             |> Clue.addGuessToHistory guessTwo
 
                     conclusions =
-                        from testPlayers history
+                        from testPlayers guessHistory Clue.noReveals
 
                     expectedStatuses =
                         ( MaybeHolding 2
@@ -178,14 +178,20 @@ all =
                             |> finishGuess
                             |> extractGuess
                             |> addShowerToGuess showerId
-                            |> addRevealedCardToGuess (Just (getCardId testWeaponCard))
 
-                    history =
+                    guessHistory =
                         Clue.noGuesses
                             |> Clue.addGuessToHistory guess
 
+                    reveal =
+                        Clue.createReveal (getCardId testWeaponCard) showerId
+
+                    revealHistory =
+                        Clue.noReveals
+                            |> Clue.addRevealToHistory reveal
+
                     conclusions =
-                        from testPlayers history
+                        from testPlayers guessHistory revealHistory
 
                     expectedShowerStatuses =
                         ( MaybeHolding 1
@@ -242,13 +248,13 @@ all =
                             |> extractGuess
                             |> addNoShowToGuess playerId
 
-                    history =
+                    guessHistory =
                         Clue.noGuesses
                             |> Clue.addGuessToHistory guessOne
                             |> Clue.addGuessToHistory guessTwo
 
                     conclusions =
-                        from testPlayers history
+                        from testPlayers guessHistory Clue.noReveals
 
                     playerThreeHallStatus =
                         getHoldingStatus conclusions "hall" playerId
@@ -272,7 +278,9 @@ all =
                             |> finishGuess
                             |> extractGuess
                             |> addShowerToGuess playerId
-                            |> addRevealedCardToGuess (Just "plum")
+
+                    revealOne =
+                        Clue.createReveal "plum" playerId
 
                     guessTwo =
                         Clue.beginGuess 1
@@ -282,7 +290,9 @@ all =
                             |> finishGuess
                             |> extractGuess
                             |> addShowerToGuess playerId
-                            |> addRevealedCardToGuess (Just "knife")
+
+                    revealTwo =
+                        Clue.createReveal "knife" playerId
 
                     guessThree =
                         Clue.beginGuess 2
@@ -292,16 +302,24 @@ all =
                             |> finishGuess
                             |> extractGuess
                             |> addShowerToGuess playerId
-                            |> addRevealedCardToGuess (Just "hall")
 
-                    history =
+                    revealThree =
+                        Clue.createReveal "hall" playerId
+
+                    guessHistory =
                         Clue.noGuesses
                             |> Clue.addGuessToHistory guessOne
                             |> Clue.addGuessToHistory guessTwo
                             |> Clue.addGuessToHistory guessThree
 
+                    revealHistory =
+                        Clue.noReveals
+                            |> Clue.addRevealToHistory revealOne
+                            |> Clue.addRevealToHistory revealTwo
+                            |> Clue.addRevealToHistory revealThree
+
                     conclusions =
-                        from testPlayers history
+                        from testPlayers guessHistory revealHistory
 
                     otherCardStatus =
                         getHoldingStatus conclusions "conservatory" playerId
@@ -331,7 +349,9 @@ all =
                             |> finishGuess
                             |> extractGuess
                             |> addShowerToGuess playerId
-                            |> addRevealedCardToGuess (Just "plum")
+
+                    revealOne =
+                        Clue.createReveal "plum" playerId
 
                     guessTwo =
                         Clue.beginGuess 1
@@ -341,7 +361,9 @@ all =
                             |> finishGuess
                             |> extractGuess
                             |> addShowerToGuess playerId
-                            |> addRevealedCardToGuess (Just "green")
+
+                    revealTwo =
+                        Clue.createReveal "green" playerId
 
                     guessThree =
                         Clue.beginGuess 0
@@ -351,7 +373,9 @@ all =
                             |> finishGuess
                             |> extractGuess
                             |> addShowerToGuess playerId
-                            |> addRevealedCardToGuess (Just "mustard")
+
+                    revealThree =
+                        Clue.createReveal "mustard" playerId
 
                     guessFour =
                         Clue.beginGuess 1
@@ -361,17 +385,26 @@ all =
                             |> finishGuess
                             |> extractGuess
                             |> addShowerToGuess playerId
-                            |> addRevealedCardToGuess (Just "white")
 
-                    history =
+                    revealFour =
+                        Clue.createReveal "white" playerId
+
+                    guessHistory =
                         Clue.noGuesses
                             |> Clue.addGuessToHistory guessOne
                             |> Clue.addGuessToHistory guessTwo
                             |> Clue.addGuessToHistory guessThree
                             |> Clue.addGuessToHistory guessFour
 
+                    revealHistory =
+                        Clue.noReveals
+                            |> Clue.addRevealToHistory revealOne
+                            |> Clue.addRevealToHistory revealTwo
+                            |> Clue.addRevealToHistory revealThree
+                            |> Clue.addRevealToHistory revealFour
+
                     conclusions =
-                        from threePlayers history
+                        from threePlayers guessHistory revealHistory
 
                     otherCardStatus =
                         getHoldingStatus conclusions "knife" playerId
@@ -401,7 +434,9 @@ all =
                             |> finishGuess
                             |> extractGuess
                             |> addShowerToGuess playerId
-                            |> addRevealedCardToGuess (Just "plum")
+
+                    revealOne =
+                        Clue.createReveal "plum" playerId
 
                     guessTwo =
                         Clue.beginGuess 1
@@ -411,7 +446,9 @@ all =
                             |> finishGuess
                             |> extractGuess
                             |> addShowerToGuess playerId
-                            |> addRevealedCardToGuess (Just "green")
+
+                    revealTwo =
+                        Clue.createReveal "green" playerId
 
                     guessThree =
                         Clue.beginGuess 0
@@ -421,16 +458,24 @@ all =
                             |> finishGuess
                             |> extractGuess
                             |> addShowerToGuess playerId
-                            |> addRevealedCardToGuess (Just "mustard")
 
-                    history =
+                    revealThree =
+                        Clue.createReveal "mustard" playerId
+
+                    guessHistory =
                         Clue.noGuesses
                             |> Clue.addGuessToHistory guessOne
                             |> Clue.addGuessToHistory guessTwo
                             |> Clue.addGuessToHistory guessThree
 
+                    revealHistory =
+                        Clue.noReveals
+                            |> Clue.addRevealToHistory revealOne
+                            |> Clue.addRevealToHistory revealTwo
+                            |> Clue.addRevealToHistory revealThree
+
                     conclusions =
-                        from threePlayers history
+                        from threePlayers guessHistory revealHistory
 
                     otherCardStatus =
                         getHoldingStatus conclusions "white" playerId

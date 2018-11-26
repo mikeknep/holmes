@@ -5,7 +5,7 @@ module Conclusions exposing
     , getHoldingStatus
     )
 
-import Clue exposing (CardId, CompleteGuess, GuessHistory)
+import Clue exposing (CardId, CompleteGuess, GuessHistory, Reveal, RevealHistory)
 import Dict exposing (..)
 import DictHelper
 import Player exposing (Player, PlayerId, Players)
@@ -17,14 +17,17 @@ type HoldingStatus
     | Holding
 
 
-from : Players -> GuessHistory -> Conclusions
-from players guessHistory =
+from : Players -> GuessHistory -> RevealHistory -> Conclusions
+from players guessHistory revealHistory =
     let
         guesses =
             Clue.allGuesses guessHistory
+
+        reveals =
+            Clue.allReveals revealHistory
     in
     setupConclusions (Player.allIds players)
-        |> applyHistoricalFacts guesses
+        |> applyHistoricalFacts guesses reveals
         |> analyze players guesses
         |> Conclusions
 
@@ -56,9 +59,23 @@ setupConclusions playerIds =
     List.foldl reducer Dict.empty Clue.allCards
 
 
-applyHistoricalFacts : List CompleteGuess -> ConclusionsDict -> ConclusionsDict
-applyHistoricalFacts history conclusions =
-    List.foldl applyGuessFacts conclusions history
+applyHistoricalFacts : List CompleteGuess -> List Reveal -> ConclusionsDict -> ConclusionsDict
+applyHistoricalFacts guesses reveals conclusions =
+    conclusions
+        |> (\c -> List.foldl applyGuessFacts c guesses)
+        |> (\c -> List.foldl applyRevealFacts c reveals)
+
+
+applyRevealFacts : Reveal -> ConclusionsDict -> ConclusionsDict
+applyRevealFacts reveal conclusions =
+    let
+        cardId =
+            Clue.getRevealedCard reveal
+
+        playerId =
+            Clue.getRevealer reveal
+    in
+    Dict.insert ( cardId, playerId ) Holding conclusions
 
 
 applyGuessFacts : CompleteGuess -> ConclusionsDict -> ConclusionsDict
@@ -87,20 +104,10 @@ setShowerStatuses guess conclusions =
     let
         reducer =
             \showerId cardId cs -> Dict.update ( cardId, showerId ) incrementMaybe cs
-
-        maybeSetter =
-            \showerId -> List.foldl (reducer showerId) conclusions (Clue.getCardIdsFromGuess guess)
-
-        revealedSetter =
-            \showerId revealedCardId cs -> Dict.insert ( revealedCardId, showerId ) Holding cs
     in
     case Clue.getShower guess of
-        Just ( showerId, Just revealedCardId ) ->
-            maybeSetter showerId
-                |> revealedSetter showerId revealedCardId
-
-        Just ( showerId, Nothing ) ->
-            maybeSetter showerId
+        Just ( showerId, _ ) ->
+            List.foldl (reducer showerId) conclusions (Clue.getCardIdsFromGuess guess)
 
         Nothing ->
             conclusions
