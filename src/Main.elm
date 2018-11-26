@@ -60,7 +60,8 @@ type Msg
     | AddCardToGuess CardId
     | NoCardsToShow PlayerId
     | ShowsSomeCard PlayerId
-    | SetRevealedCard (Maybe CardId) PlayerId
+    | SetRevealedCard CardId PlayerId
+    | EndGuess
 
 
 buildPlayerName : Model -> String -> ( Model, Cmd Msg )
@@ -184,49 +185,41 @@ showsSomeCard model playerId =
                 updatedGuess =
                     Clue.addShowerToGuess playerId guess
 
+                updatedGuessHistory =
+                    Clue.addGuessToHistory updatedGuess model.guessHistory
+
                 updatedState =
                     Revealing updatedGuess
             in
-            ( { model | gameState = updatedState }
-            , Cmd.none
-            )
-
-        _ ->
-            ( model, Cmd.none )
-
-
-setRevealedCard : Model -> Maybe CardId -> PlayerId -> ( Model, Cmd Msg )
-setRevealedCard model maybeCardId playerId =
-    case model.gameState of
-        Revealing guess ->
-            let
-                updatedGuess =
-                    Clue.addRevealedCardToGuess maybeCardId guess
-
-                updatedHistory =
-                    Clue.addGuessToHistory updatedGuess model.guessHistory
-
-                updatedRevealHistory =
-                    case maybeCardId of
-                        Just cardId ->
-                            Clue.addRevealToHistory (Clue.createReveal cardId playerId) model.revealHistory
-
-                        Nothing ->
-                            model.revealHistory
-
-                updatedState =
-                    Investigating People
-            in
             ( { model
                 | gameState = updatedState
-                , guessHistory = updatedHistory
-                , revealHistory = updatedRevealHistory
+                , guessHistory = updatedGuessHistory
               }
             , Cmd.none
             )
 
         _ ->
             ( model, Cmd.none )
+
+
+setRevealedCard : Model -> CardId -> PlayerId -> ( Model, Cmd Msg )
+setRevealedCard model cardId playerId =
+    case model.gameState of
+        Revealing guess ->
+            ( { model
+                | gameState = Investigating People
+                , revealHistory = Clue.addRevealToHistory (Clue.createReveal cardId playerId) model.revealHistory
+              }
+            , Cmd.none
+            )
+
+        _ ->
+            ( model, Cmd.none )
+
+
+endGuess : Model -> ( Model, Cmd Msg )
+endGuess model =
+    ( { model | gameState = Investigating People }, Cmd.none )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -256,8 +249,11 @@ update msg model =
         ShowsSomeCard playerId ->
             showsSomeCard model playerId
 
-        SetRevealedCard maybeCardId playerId ->
-            setRevealedCard model maybeCardId playerId
+        SetRevealedCard cardId playerId ->
+            setRevealedCard model cardId playerId
+
+        EndGuess ->
+            endGuess model
 
 
 
@@ -349,21 +345,21 @@ renderShowerOptions guess players =
     ]
 
 
-revealedCardIsUnknown : PlayerId -> Html Msg
-revealedCardIsUnknown playerId =
-    a [ class "button", onClick (SetRevealedCard Nothing playerId) ] [ text "Unknown" ]
+revealedCardIsUnknown : Html Msg
+revealedCardIsUnknown =
+    a [ class "button", onClick EndGuess ] [ text "Unknown" ]
 
 
 revealedCardOption : PlayerId -> CardId -> Html Msg
 revealedCardOption playerId cardId =
-    a [ class "button", onClick (SetRevealedCard (Just cardId) playerId) ] [ text (Clue.displayCardWithId cardId) ]
+    a [ class "button", onClick (SetRevealedCard cardId playerId) ] [ text (Clue.displayCardWithId cardId) ]
 
 
 renderRevealedCardOptions : CompleteGuess -> List (Html Msg)
 renderRevealedCardOptions guess =
     case Clue.getShower guess of
-        Just ( showerId, _ ) ->
-            revealedCardIsUnknown showerId
+        Just showerId ->
+            revealedCardIsUnknown
                 :: List.map (revealedCardOption showerId) (Clue.getCardIdsFromGuess guess)
 
         Nothing ->

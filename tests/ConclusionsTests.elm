@@ -42,9 +42,9 @@ all =
 
                     guess =
                         Clue.beginGuess 0
-                            |> addCardToGuess (getCardId testPersonCard)
-                            |> addCardToGuess (getCardId testWeaponCard)
-                            |> addCardToGuess (getCardId testRoomCard)
+                            |> addCardToGuess "plum"
+                            |> addCardToGuess "rope"
+                            |> addCardToGuess "hall"
                             |> finishGuess
                             |> extractGuess
                             |> addNoShowToGuess noShowId
@@ -63,9 +63,9 @@ all =
                         )
 
                     actualStatuses =
-                        ( getHoldingStatus conclusions (getCardId testPersonCard) noShowId
-                        , getHoldingStatus conclusions (getCardId testWeaponCard) noShowId
-                        , getHoldingStatus conclusions (getCardId testRoomCard) noShowId
+                        ( getHoldingStatus conclusions "plum" noShowId
+                        , getHoldingStatus conclusions "rope" noShowId
+                        , getHoldingStatus conclusions "hall" noShowId
                         )
                 in
                 Expect.equal expectedStatuses actualStatuses
@@ -80,9 +80,9 @@ all =
 
                     guess =
                         Clue.beginGuess 0
-                            |> addCardToGuess (getCardId testPersonCard)
-                            |> addCardToGuess (getCardId testWeaponCard)
-                            |> addCardToGuess (getCardId testRoomCard)
+                            |> addCardToGuess "plum"
+                            |> addCardToGuess "rope"
+                            |> addCardToGuess "hall"
                             |> finishGuess
                             |> extractGuess
                             |> addShowerToGuess showerId
@@ -101,9 +101,9 @@ all =
                         )
 
                     actualStatuses =
-                        ( getHoldingStatus conclusions (getCardId testPersonCard) showerId
-                        , getHoldingStatus conclusions (getCardId testWeaponCard) showerId
-                        , getHoldingStatus conclusions (getCardId testRoomCard) showerId
+                        ( getHoldingStatus conclusions "plum" showerId
+                        , getHoldingStatus conclusions "rope" showerId
+                        , getHoldingStatus conclusions "hall" showerId
                         )
                 in
                 Expect.equal expectedStatuses actualStatuses
@@ -119,18 +119,18 @@ all =
 
                     guessOne =
                         Clue.beginGuess 0
-                            |> addCardToGuess (getCardId testPersonCard)
-                            |> addCardToGuess (getCardId testWeaponCard)
-                            |> addCardToGuess (getCardId testRoomCard)
+                            |> addCardToGuess "plum"
+                            |> addCardToGuess "rope"
+                            |> addCardToGuess "hall"
                             |> finishGuess
                             |> extractGuess
                             |> addShowerToGuess showerId
 
                     guessTwo =
                         Clue.beginGuess 0
-                            |> addCardToGuess (getCardId testPersonCard)
-                            |> addCardToGuess (getCardId testWeaponCard)
-                            |> addCardToGuess (getCardId testRoomCard)
+                            |> addCardToGuess "plum"
+                            |> addCardToGuess "rope"
+                            |> addCardToGuess "hall"
                             |> finishGuess
                             |> extractGuess
                             |> addShowerToGuess showerId
@@ -150,9 +150,9 @@ all =
                         )
 
                     actualStatuses =
-                        ( getHoldingStatus conclusions (getCardId testPersonCard) showerId
-                        , getHoldingStatus conclusions (getCardId testWeaponCard) showerId
-                        , getHoldingStatus conclusions (getCardId testRoomCard) showerId
+                        ( getHoldingStatus conclusions "plum" showerId
+                        , getHoldingStatus conclusions "rope" showerId
+                        , getHoldingStatus conclusions "hall" showerId
                         )
                 in
                 Expect.equal expectedStatuses actualStatuses
@@ -172,9 +172,9 @@ all =
 
                     guess =
                         Clue.beginGuess 0
-                            |> addCardToGuess (getCardId testPersonCard)
-                            |> addCardToGuess (getCardId testWeaponCard)
-                            |> addCardToGuess (getCardId testRoomCard)
+                            |> addCardToGuess "plum"
+                            |> addCardToGuess "rope"
+                            |> addCardToGuess "hall"
                             |> finishGuess
                             |> extractGuess
                             |> addShowerToGuess showerId
@@ -184,7 +184,7 @@ all =
                             |> Clue.addGuessToHistory guess
 
                     reveal =
-                        Clue.createReveal (getCardId testWeaponCard) showerId
+                        Clue.createReveal "rope" showerId
 
                     revealHistory =
                         Clue.noReveals
@@ -206,15 +206,15 @@ all =
                         )
 
                     actualShowerStatuses =
-                        ( getHoldingStatus conclusions (getCardId testPersonCard) showerId
-                        , getHoldingStatus conclusions (getCardId testWeaponCard) showerId
-                        , getHoldingStatus conclusions (getCardId testRoomCard) showerId
+                        ( getHoldingStatus conclusions "plum" showerId
+                        , getHoldingStatus conclusions "rope" showerId
+                        , getHoldingStatus conclusions "hall" showerId
                         )
 
                     actualOtherPlayerStatuses =
-                        ( getHoldingStatus conclusions (getCardId testPersonCard) otherPlayerId
-                        , getHoldingStatus conclusions (getCardId testWeaponCard) otherPlayerId
-                        , getHoldingStatus conclusions (getCardId testRoomCard) otherPlayerId
+                        ( getHoldingStatus conclusions "plum" otherPlayerId
+                        , getHoldingStatus conclusions "rope" otherPlayerId
+                        , getHoldingStatus conclusions "hall" otherPlayerId
                         )
                 in
                 Expect.equal

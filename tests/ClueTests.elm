@@ -42,12 +42,9 @@ all =
                         guesserId =
                             5
 
-                        cardId =
-                            getCardId testPersonCard
-
                         guess =
                             beginGuess guesserId
-                                |> addCardToGuess cardId
+                                |> addCardToGuess "plum"
                                 |> finishGuess
                     in
                     Expect.false "Expected guess to be incomplete" (isComplete guess)
@@ -59,9 +56,9 @@ all =
 
                         guess =
                             beginGuess guesserId
-                                |> addCardToGuess (getCardId testPersonCard)
-                                |> addCardToGuess (getCardId testWeaponCard)
-                                |> addCardToGuess (getCardId testPersonCard)
+                                |> addCardToGuess "plum"
+                                |> addCardToGuess "mustard"
+                                |> addCardToGuess "knife"
                                 |> finishGuess
                     in
                     Expect.false "Expected guess to be incomplete" (isComplete guess)
@@ -73,9 +70,9 @@ all =
 
                         guess =
                             beginGuess guesserId
-                                |> addCardToGuess (getCardId testPersonCard)
-                                |> addCardToGuess (getCardId testWeaponCard)
-                                |> addCardToGuess (getCardId testRoomCard)
+                                |> addCardToGuess "plum"
+                                |> addCardToGuess "rope"
+                                |> addCardToGuess "hall"
                                 |> finishGuess
                     in
                     Expect.true "Expected guess to be complete" (isComplete guess)
@@ -93,16 +90,16 @@ all =
 
                         guess =
                             beginGuess guesserId
-                                |> addCardToGuess (getCardId testPersonCard)
-                                |> addCardToGuess (getCardId testWeaponCard)
-                                |> addCardToGuess (getCardId testRoomCard)
+                                |> addCardToGuess "plum"
+                                |> addCardToGuess "rope"
+                                |> addCardToGuess "hall"
                                 |> finishGuess
                                 |> extractGuess
                                 |> addNoShowToGuess noShowIdOne
                                 |> addNoShowToGuess noShowIdTwo
                     in
                     Expect.equal [ noShowIdTwo, noShowIdOne ] (getNoShows guess)
-            , test "adding a shower with unknown card to a guess" <|
+            , test "adding a shower to a guess" <|
                 \_ ->
                     let
                         guesserId =
@@ -113,37 +110,14 @@ all =
 
                         guess =
                             beginGuess guesserId
-                                |> addCardToGuess (getCardId testPersonCard)
-                                |> addCardToGuess (getCardId testWeaponCard)
-                                |> addCardToGuess (getCardId testRoomCard)
+                                |> addCardToGuess "plum"
+                                |> addCardToGuess "rope"
+                                |> addCardToGuess "hall"
                                 |> finishGuess
                                 |> extractGuess
                                 |> addShowerToGuess showerId
                     in
-                    Expect.equal (Just ( showerId, Nothing )) (getShower guess)
-            , test "adding a shower and known card to a guess" <|
-                \_ ->
-                    let
-                        guesserId =
-                            5
-
-                        showerId =
-                            3
-
-                        cardId =
-                            getCardId testWeaponCard
-
-                        guess =
-                            beginGuess guesserId
-                                |> addCardToGuess (getCardId testPersonCard)
-                                |> addCardToGuess (getCardId testWeaponCard)
-                                |> addCardToGuess (getCardId testRoomCard)
-                                |> finishGuess
-                                |> extractGuess
-                                |> addShowerToGuess showerId
-                                |> addRevealedCardToGuess (Just cardId)
-                    in
-                    Expect.equal (Just ( showerId, Just cardId )) (getShower guess)
+                    Expect.equal (Just showerId) (getShower guess)
             , test "retrieving the card IDs for the person, weapon, and room from a complete guess" <|
                 \_ ->
                     let
@@ -152,17 +126,14 @@ all =
 
                         guess =
                             beginGuess guesserId
-                                |> addCardToGuess (getCardId testPersonCard)
-                                |> addCardToGuess (getCardId testWeaponCard)
-                                |> addCardToGuess (getCardId testRoomCard)
+                                |> addCardToGuess "plum"
+                                |> addCardToGuess "rope"
+                                |> addCardToGuess "hall"
                                 |> finishGuess
                                 |> extractGuess
 
                         expectedIds =
-                            [ getCardId testPersonCard
-                            , getCardId testWeaponCard
-                            , getCardId testRoomCard
-                            ]
+                            [ "plum", "rope", "hall" ]
                     in
                     Expect.equal expectedIds (getCardIdsFromGuess guess)
             ]

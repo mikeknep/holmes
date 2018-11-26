@@ -106,7 +106,7 @@ setShowerStatuses guess conclusions =
             \showerId cardId cs -> Dict.update ( cardId, showerId ) incrementMaybe cs
     in
     case Clue.getShower guess of
-        Just ( showerId, _ ) ->
+        Just showerId ->
             List.foldl (reducer showerId) conclusions (Clue.getCardIdsFromGuess guess)
 
         Nothing ->
@@ -188,7 +188,7 @@ checkCombination playerId cardIds conclusions =
 playerShowedCardForGuess : PlayerId -> CompleteGuess -> Bool
 playerShowedCardForGuess playerId guess =
     case Clue.getShower guess of
-        Just ( showerId, _ ) ->
+        Just showerId ->
             showerId == playerId
 
         Nothing ->

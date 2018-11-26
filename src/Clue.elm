@@ -10,7 +10,6 @@ module Clue exposing
     , addGuessToHistory
     , addNoShowToGuess
     , addRevealToHistory
-    , addRevealedCardToGuess
     , addShowerToGuess
     , allCards
     , allGuesses
@@ -32,9 +31,6 @@ module Clue exposing
     , noReveals
     , personCards
     , roomCards
-    , testPersonCard
-    , testRoomCard
-    , testWeaponCard
     , weaponCards
     )
 
@@ -87,30 +83,6 @@ getCardWithId cardId =
 displayCardWithId : CardId -> String
 displayCardWithId cardId =
     getCardWithId cardId |> Maybe.map displayCard |> Maybe.withDefault ""
-
-
-testPersonCard : Card
-testPersonCard =
-    Card
-        { displayName = "Test Person"
-        , id = "plum"
-        }
-
-
-testWeaponCard : Card
-testWeaponCard =
-    Card
-        { displayName = "Test Weapon"
-        , id = "rope"
-        }
-
-
-testRoomCard : Card
-testRoomCard =
-    Card
-        { displayName = "Test Room"
-        , id = "hall"
-        }
 
 
 personCards : List Card
@@ -190,7 +162,7 @@ type alias BaseGuessDetails a =
     { a
         | guesser : PlayerId
         , noShows : List PlayerId
-        , shower : Maybe ( PlayerId, Maybe CardId )
+        , shower : Maybe PlayerId
     }
 
 
@@ -249,17 +221,7 @@ getNoShows (CompleteGuess { noShows }) =
 
 addShowerToGuess : PlayerId -> CompleteGuess -> CompleteGuess
 addShowerToGuess playerId (CompleteGuess details) =
-    CompleteGuess { details | shower = Just ( playerId, Nothing ) }
-
-
-addRevealedCardToGuess : Maybe CardId -> CompleteGuess -> CompleteGuess
-addRevealedCardToGuess maybeCardId (CompleteGuess details) =
-    case details.shower of
-        Just ( player, Nothing ) ->
-            CompleteGuess { details | shower = Just ( player, maybeCardId ) }
-
-        _ ->
-            CompleteGuess details
+    CompleteGuess { details | shower = Just playerId }
 
 
 getGuesser : CompleteGuess -> PlayerId
@@ -267,7 +229,7 @@ getGuesser (CompleteGuess { guesser }) =
     guesser
 
 
-getShower : CompleteGuess -> Maybe ( PlayerId, Maybe CardId )
+getShower : CompleteGuess -> Maybe PlayerId
 getShower (CompleteGuess { shower }) =
     shower
 
