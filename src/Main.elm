@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import Browser exposing (element)
-import Clue exposing (Card, CardId, CompleteGuess, GuessHistory, IncompleteGuess)
+import Clue exposing (Card, CardId, CompleteGuess, GuessHistory, IncompleteGuess, RevealHistory)
 import Conclusions exposing (Conclusions, HoldingStatus(..))
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -32,6 +32,7 @@ type alias Model =
     { players : Players
     , gameState : GameState
     , guessHistory : GuessHistory
+    , revealHistory : RevealHistory
     }
 
 
@@ -40,6 +41,7 @@ init =
     ( { players = Player.noPlayers
       , gameState = Setup ""
       , guessHistory = Clue.noGuesses
+      , revealHistory = Clue.noReveals
       }
     , Cmd.none
     )

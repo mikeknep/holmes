@@ -4,14 +4,19 @@ module Clue exposing
     , CompleteGuess
     , GuessHistory
     , IncompleteGuess
+    , Reveal
+    , RevealHistory
     , addCardToGuess
     , addGuessToHistory
     , addNoShowToGuess
+    , addRevealToHistory
     , addRevealedCardToGuess
     , addShowerToGuess
     , allCards
     , allGuesses
+    , allReveals
     , beginGuess
+    , createReveal
     , displayCard
     , displayCardWithId
     , finishGuess
@@ -20,8 +25,11 @@ module Clue exposing
     , getCardOptionsForGuess
     , getGuesser
     , getNoShows
+    , getRevealedCard
+    , getRevealer
     , getShower
     , noGuesses
+    , noReveals
     , personCards
     , roomCards
     , testPersonCard
@@ -301,4 +309,46 @@ addGuessToHistory guess (GuessHistory history) =
 
 allGuesses : GuessHistory -> List CompleteGuess
 allGuesses (GuessHistory history) =
+    history
+
+
+type Reveal
+    = Reveal RevealDetails
+
+
+type alias RevealDetails =
+    ( CardId, PlayerId )
+
+
+createReveal : CardId -> PlayerId -> Reveal
+createReveal cardId playerId =
+    Reveal ( cardId, playerId )
+
+
+getRevealedCard : Reveal -> CardId
+getRevealedCard (Reveal ( cardId, _ )) =
+    cardId
+
+
+getRevealer : Reveal -> PlayerId
+getRevealer (Reveal ( _, playerId )) =
+    playerId
+
+
+type RevealHistory
+    = RevealHistory (List Reveal)
+
+
+noReveals : RevealHistory
+noReveals =
+    RevealHistory []
+
+
+addRevealToHistory : Reveal -> RevealHistory -> RevealHistory
+addRevealToHistory reveal (RevealHistory history) =
+    RevealHistory (reveal :: history)
+
+
+allReveals : RevealHistory -> List Reveal
+allReveals (RevealHistory history) =
     history
