@@ -31,7 +31,7 @@ type GameState
 type alias Model =
     { players : Players
     , gameState : GameState
-    , history : GuessHistory
+    , guessHistory : GuessHistory
     }
 
 
@@ -39,7 +39,7 @@ init : ( Model, Cmd Msg )
 init =
     ( { players = Player.noPlayers
       , gameState = Setup ""
-      , history = Clue.noGuesses
+      , guessHistory = Clue.noGuesses
       }
     , Cmd.none
     )
@@ -151,10 +151,10 @@ noCardsToShow model playerId =
 
                 updatedHistory =
                     if goneAroundTheCircle then
-                        Clue.addGuessToHistory updatedGuess model.history
+                        Clue.addGuessToHistory updatedGuess model.guessHistory
 
                     else
-                        model.history
+                        model.guessHistory
 
                 updatedState =
                     if goneAroundTheCircle then
@@ -165,7 +165,7 @@ noCardsToShow model playerId =
             in
             ( { model
                 | gameState = updatedState
-                , history = updatedHistory
+                , guessHistory = updatedHistory
               }
             , Cmd.none
             )
@@ -202,12 +202,12 @@ setRevealedCard model maybeCardId =
                     Clue.addRevealedCardToGuess maybeCardId guess
 
                 updatedHistory =
-                    Clue.addGuessToHistory updatedGuess model.history
+                    Clue.addGuessToHistory updatedGuess model.guessHistory
 
                 updatedState =
                     Investigating People
             in
-            ( { model | gameState = updatedState, history = updatedHistory }
+            ( { model | gameState = updatedState, guessHistory = updatedHistory }
             , Cmd.none
             )
 
@@ -469,10 +469,10 @@ cardRow conclusions playerIds card =
 
 
 investigatingView : SubjectOfInvestigation -> Model -> Html Msg
-investigatingView subject { players, history } =
+investigatingView subject { players, guessHistory } =
     let
         conclusions =
-            Conclusions.from players history
+            Conclusions.from players guessHistory
     in
     case subject of
         PlayerHand playerId ->
