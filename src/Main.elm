@@ -366,11 +366,18 @@ renderRevealedCardOptions guess =
             []
 
 
-guessingForm : Model -> Html Msg
-guessingForm model =
+guessingForm : Conclusions -> Model -> Html Msg
+guessingForm conclusions model =
     case model.gameState of
         Guessing guess ->
-            selectCard (Clue.getCardOptionsForGuess guess)
+            let
+                cards =
+                    Clue.getCardOptionsForGuess guess
+            in
+            div []
+                [ selectCard cards
+                , renderGameBoard cards conclusions model.players
+                ]
 
         _ ->
             div [] []
@@ -478,12 +485,8 @@ cardRow conclusions playerIds card =
     tr [] (cardCell card :: List.map (cardPlayerCell conclusions card) playerIds)
 
 
-investigatingView : SubjectOfInvestigation -> Model -> Html Msg
-investigatingView subject { players, guessHistory, revealHistory } =
-    let
-        conclusions =
-            Conclusions.from players guessHistory revealHistory
-    in
+investigatingView : Conclusions -> SubjectOfInvestigation -> Model -> Html Msg
+investigatingView conclusions subject { players, guessHistory, revealHistory } =
     case subject of
         PlayerHand playerId ->
             playerView conclusions playerId players
@@ -500,12 +503,16 @@ investigatingView subject { players, guessHistory, revealHistory } =
 
 renderMainDisplay : Model -> Html Msg
 renderMainDisplay model =
+    let
+        conclusions =
+            Conclusions.from model.players model.guessHistory model.revealHistory
+    in
     case model.gameState of
         Investigating subject ->
-            investigatingView subject model
+            investigatingView conclusions subject model
 
         Guessing _ ->
-            guessingForm model
+            guessingForm conclusions model
 
         Revealing _ ->
             revealingForm model
