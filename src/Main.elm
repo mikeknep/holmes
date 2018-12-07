@@ -107,13 +107,13 @@ addCardToGuess model cardId =
     case model.gameState of
         Guessing guess ->
             let
-                maybeFinishedCard =
+                maybeFinishedGuess =
                     guess
                         |> Clue.addCardToGuess cardId
                         |> Clue.finishGuess
 
                 updatedGameState =
-                    case maybeFinishedCard of
+                    case maybeFinishedGuess of
                         Ok completeGuess ->
                             Revealing completeGuess
 
