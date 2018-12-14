@@ -10,12 +10,12 @@ import Test exposing (..)
 testPlayers : Players
 testPlayers =
     Player.noPlayers
-        |> Player.addNewPlayer "Zach" 3
-        |> Player.addNewPlayer "Allison" 3
-        |> Player.addNewPlayer "Bill" 3
-        |> Player.addNewPlayer "Clare" 3
-        |> Player.addNewPlayer "Dan" 3
-        |> Player.addNewPlayer "Ellie" 3
+        |> Player.addNewPlayer 3 "Zach"
+        |> Player.addNewPlayer 3 "Allison"
+        |> Player.addNewPlayer 3 "Bill"
+        |> Player.addNewPlayer 3 "Clare"
+        |> Player.addNewPlayer 3 "Dan"
+        |> Player.addNewPlayer 3 "Ellie"
 
 
 extractGuess : Result a CompleteGuess -> CompleteGuess
@@ -334,9 +334,9 @@ all =
                 let
                     threePlayers =
                         Player.noPlayers
-                            |> Player.addNewPlayer "Zach" 4
-                            |> Player.addNewPlayer "Allison" 4
-                            |> Player.addNewPlayer "Bill" 4
+                            |> Player.addNewPlayer 4 "Zach"
+                            |> Player.addNewPlayer 4 "Allison"
+                            |> Player.addNewPlayer 4 "Bill"
 
                     playerId =
                         2
@@ -419,9 +419,9 @@ all =
                 let
                     threePlayers =
                         Player.noPlayers
-                            |> Player.addNewPlayer "Zach" 4
-                            |> Player.addNewPlayer "Allison" 4
-                            |> Player.addNewPlayer "Bill" 4
+                            |> Player.addNewPlayer 4 "Zach"
+                            |> Player.addNewPlayer 4 "Allison"
+                            |> Player.addNewPlayer 4 "Bill"
 
                     playerId =
                         2

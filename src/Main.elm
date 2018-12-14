@@ -79,7 +79,7 @@ addPlayer model cardCount =
         Setup playerName ->
             ( { model
                 | gameState = Setup ""
-                , players = Player.addNewPlayer playerName cardCount model.players
+                , players = Player.addNewPlayer cardCount playerName model.players
               }
             , Cmd.none
             )

@@ -14,7 +14,7 @@ all =
                     let
                         names =
                             Player.noPlayers
-                                |> Player.addNewPlayer "Mike" 3
+                                |> Player.addNewPlayer 3 "Mike"
                                 |> Player.allPlayers
                                 |> List.map Player.getName
                     in
@@ -24,7 +24,7 @@ all =
                     let
                         names =
                             Player.noPlayers
-                                |> Player.addNewPlayer "" 3
+                                |> Player.addNewPlayer 3 ""
                                 |> Player.allPlayers
                     in
                     Expect.equal [] names

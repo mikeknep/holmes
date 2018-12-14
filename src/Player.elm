@@ -28,8 +28,8 @@ noPlayers =
     Players Dict.empty
 
 
-addNewPlayer : String -> Int -> Players -> Players
-addNewPlayer name cardCount (Players players) =
+addNewPlayer : Int -> String -> Players -> Players
+addNewPlayer cardCount name (Players players) =
     if String.isEmpty name then
         Players players
 
