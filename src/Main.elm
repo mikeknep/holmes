@@ -8,6 +8,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import List.Extra exposing (takeWhile, takeWhileRight)
 import Player exposing (Player, PlayerId, Players)
+import Setup exposing (Setup)
 
 
 type SubjectOfInvestigation
@@ -18,7 +19,8 @@ type SubjectOfInvestigation
 
 
 type GameState
-    = Setup String
+    = Setup Setup
+    | FinishIncompleteSetup Setup
     | Guessing IncompleteGuess
     | Revealing CompleteGuess
     | Investigating SubjectOfInvestigation
@@ -39,7 +41,7 @@ type alias Model =
 init : ( Model, Cmd Msg )
 init =
     ( { players = Player.noPlayers
-      , gameState = Setup ""
+      , gameState = Setup Setup.beginSetup
       , guessHistory = Clue.noGuesses
       , revealHistory = Clue.noReveals
       }
@@ -53,8 +55,9 @@ init =
 
 type Msg
     = BuildPlayerName String
-    | AddPlayer Int
+    | AddPlayer
     | StartGame
+    | MarkPlayerAsDisadvantaged String
     | Investigate SubjectOfInvestigation
     | BeginGuess PlayerId
     | AddCardToGuess CardId
@@ -66,21 +69,21 @@ type Msg
 
 buildPlayerName : Model -> String -> ( Model, Cmd Msg )
 buildPlayerName model nameFragment =
-    ( { model
-        | gameState = Setup nameFragment
-      }
-    , Cmd.none
-    )
-
-
-addPlayer : Model -> Int -> ( Model, Cmd Msg )
-addPlayer model cardCount =
     case model.gameState of
-        Setup playerName ->
-            ( { model
-                | gameState = Setup ""
-                , players = Player.addNewPlayer cardCount playerName model.players
-              }
+        Setup setup ->
+            ( { model | gameState = Setup (Setup.buildPlayerName nameFragment setup) }
+            , Cmd.none
+            )
+
+        _ ->
+            ( model, Cmd.none )
+
+
+addPlayer : Model -> ( Model, Cmd Msg )
+addPlayer model =
+    case model.gameState of
+        Setup setup ->
+            ( { model | gameState = Setup (Setup.addPlayer setup) }
             , Cmd.none
             )
 
@@ -90,9 +93,52 @@ addPlayer model cardCount =
 
 startGame : Model -> ( Model, Cmd Msg )
 startGame model =
-    ( { model | gameState = Investigating People }
-    , Cmd.none
-    )
+    case model.gameState of
+        Setup setup ->
+            case Setup.completeSetup setup of
+                Ok players ->
+                    ( { model
+                        | gameState = Investigating People
+                        , players = players
+                      }
+                    , Cmd.none
+                    )
+
+                Err incompleteSetup ->
+                    ( { model | gameState = FinishIncompleteSetup incompleteSetup }
+                    , Cmd.none
+                    )
+
+        _ ->
+            ( model, Cmd.none )
+
+
+markPlayerAsDisadvantaged : Model -> String -> ( Model, Cmd Msg )
+markPlayerAsDisadvantaged model playerName =
+    case model.gameState of
+        FinishIncompleteSetup setup ->
+            let
+                updatedSetup =
+                    setup
+                        |> Setup.setDisadvantagedPlayer playerName
+                        |> Setup.completeSetup
+            in
+            case updatedSetup of
+                Ok players ->
+                    ( { model
+                        | gameState = Investigating People
+                        , players = players
+                      }
+                    , Cmd.none
+                    )
+
+                Err incompleteSetup ->
+                    ( { model | gameState = FinishIncompleteSetup incompleteSetup }
+                    , Cmd.none
+                    )
+
+        _ ->
+            ( model, Cmd.none )
 
 
 beginGuess : Model -> PlayerId -> ( Model, Cmd Msg )
@@ -228,11 +274,14 @@ update msg model =
         BuildPlayerName nameFragment ->
             buildPlayerName model nameFragment
 
-        AddPlayer cardCount ->
-            addPlayer model cardCount
+        AddPlayer ->
+            addPlayer model
 
         StartGame ->
             startGame model
+
+        MarkPlayerAsDisadvantaged name ->
+            markPlayerAsDisadvantaged model name
 
         Investigate subject ->
             investigate model subject
@@ -268,25 +317,43 @@ title =
 addPlayerToGame : String -> List (Html Msg)
 addPlayerToGame nameFragment =
     [ input [ type_ "text", placeholder "Name", value nameFragment, onInput BuildPlayerName ] []
-    , button [ onClick (AddPlayer 3) ] [ text "3" ]
-    , button [ onClick (AddPlayer 4) ] [ text "4" ]
+    , button [ onClick AddPlayer ] [ text "Add" ]
     , button [ onClick StartGame ] [ text "Start" ]
     ]
 
 
-listAddedPlayerNames : List Player -> List (Html msg)
-listAddedPlayerNames players =
-    List.map (\player -> p [] [ text (Player.getName player) ]) players
+listAddedPlayerNames : List String -> List (Html msg)
+listAddedPlayerNames playerNames =
+    List.map (\playerName -> p [] [ text playerName ]) playerNames
+
+
+potentiallyDisadvantagedPlayer : List String -> String -> Html Msg
+potentiallyDisadvantagedPlayer disadvantagedPlayers playerName =
+    div []
+        [ p [] [ text playerName ]
+        , button [ onClick (MarkPlayerAsDisadvantaged playerName) ] [ text "X" ]
+        ]
+
+
+listPlayersToMarkAsDisadvantaged : List String -> List String -> List (Html Msg)
+listPlayersToMarkAsDisadvantaged playerNames disadvantagedPlayers =
+    List.map (potentiallyDisadvantagedPlayer disadvantagedPlayers) playerNames
 
 
 setupNewGame : Model -> Html Msg
 setupNewGame model =
     case model.gameState of
-        Setup nameFragment ->
+        Setup setup ->
             div []
                 ([]
-                    ++ addPlayerToGame nameFragment
-                    ++ listAddedPlayerNames (Player.allPlayers model.players)
+                    ++ addPlayerToGame (Setup.getNameFragment setup)
+                    ++ listAddedPlayerNames (Setup.getPlayerNames setup)
+                )
+
+        FinishIncompleteSetup setup ->
+            div []
+                ([ p [] [ text "Two players have fewer cards than the others. Let me know who!" ] ]
+                    ++ listPlayersToMarkAsDisadvantaged (Setup.getPlayerNames setup) (Setup.getDisadvantagedPlayers setup)
                 )
 
         _ ->
@@ -517,7 +584,7 @@ renderMainDisplay model =
         Revealing _ ->
             revealingForm model
 
-        Setup _ ->
+        _ ->
             div [] []
 
 
@@ -550,6 +617,9 @@ activeGame : Model -> Html Msg
 activeGame model =
     case model.gameState of
         Setup _ ->
+            div [] []
+
+        FinishIncompleteSetup _ ->
             div [] []
 
         _ ->
