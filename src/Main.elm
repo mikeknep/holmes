@@ -259,6 +259,14 @@ setRevealedCard model cardId playerId =
             , Cmd.none
             )
 
+        Investigating (PlayerHand _) ->
+            ( { model
+                | gameState = Investigating (PlayerHand playerId)
+                , revealHistory = Clue.addRevealToHistory (Clue.createReveal cardId playerId) model.revealHistory
+              }
+            , Cmd.none
+            )
+
         _ ->
             ( model, Cmd.none )
 
@@ -479,12 +487,25 @@ displayHoldingStatus status =
 playerCardStatusAsDescriptionListEntry : Conclusions -> PlayerId -> Card -> List (Html Msg)
 playerCardStatusAsDescriptionListEntry conclusions playerId card =
     let
+        cardId =
+            Clue.getCardId card
+
         holdingStatus =
-            Conclusions.getHoldingStatus conclusions (Clue.getCardId card) playerId
-                |> displayHoldingStatus
+            Conclusions.getHoldingStatus conclusions cardId playerId
+
+        holdingStatusText =
+            displayHoldingStatus holdingStatus
+
+        ddValue =
+            case holdingStatus of
+                MaybeHolding _ ->
+                    [ text holdingStatusText, button [ onClick (SetRevealedCard cardId playerId) ] [ text "reveal" ] ]
+
+                _ ->
+                    [ text holdingStatusText ]
     in
     [ dt [] [ text (Clue.displayCard card) ]
-    , dd [] [ text holdingStatus ]
+    , dd [] ddValue
     ]
 
 
