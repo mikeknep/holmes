@@ -626,7 +626,22 @@ playerSelect model =
 
 investigateCardTypeButton : SubjectOfInvestigation -> Html Msg
 investigateCardTypeButton cardType =
-    a [ class "button", onClick (Investigate cardType) ] [ text (Debug.toString cardType) ]
+    let
+        buttonText =
+            case cardType of
+                People ->
+                    "People"
+
+                Weapons ->
+                    "Weapons"
+
+                Rooms ->
+                    "Rooms"
+
+                _ ->
+                    ""
+    in
+    a [ class "button", onClick (Investigate cardType) ] [ text buttonText ]
 
 
 cardTypeSelect : Model -> Html Msg
