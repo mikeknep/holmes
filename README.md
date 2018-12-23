@@ -1,4 +1,5 @@
 # Holmes
+[![Build Status](https://travis-ci.org/mikeknep/holmes.svg?branch=master)](https://travis-ci.org/mikeknep/holmes)
 
 Never lose at Clue again! (Unless your opponents are also using this app...)
 
